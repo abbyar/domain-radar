@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Domain Radar — Multi-Hypervisor & Proxy Inventory</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    max-width: 1440px;
+    width: 95%;
+    margin: 20px auto;
+    padding: 0 8px;
+    background: #f8fafc;
+    color: #1e293b;
+  }
+  
+  /* Domain Radar Brand Header */
+  .radar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 18px;
+    margin: 0 0 14px 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    flex-wrap: wrap;
+  }
+  .radar-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .radar-illustration {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    background: #090d16;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px #e2e8f0, 0 4px 10px rgba(15, 23, 42, 0.12);
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .radar-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .radar-ring {
+    fill: none;
+    stroke: rgba(56, 189, 248, 0.22);
+    stroke-width: 1.2;
+  }
+  .radar-grid {
+    stroke: rgba(56, 189, 248, 0.25);
+    stroke-width: 1;
+    stroke-dasharray: 2 2;
+  }
+  .radar-sweep-group {
+    transform-origin: 50px 50px;
+    animation: radar-spin 3.2s linear infinite;
+  }
+  .radar-sweep {
+    fill: url(#radarSweepGrad);
+  }
+  .radar-sweep-line {
+    stroke: #38bdf8;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+  .radar-center {
+    fill: #38bdf8;
+  }
+  .radar-blip {
+    animation: blip-pulse 2.2s ease-in-out infinite;
+  }
+  .radar-blip.blip-safeline {
+    fill: #3b82f6;
+    animation-delay: 0.2s;
+  }
+  .radar-blip.blip-npm {
+    fill: #10b981;
+    animation-delay: 1.1s;
+  }
+  .radar-blip.blip-vm {
+    fill: #f59e0b;
+    animation-delay: 1.8s;
+  }
+  @keyframes radar-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes blip-pulse {
+    0%, 100% { opacity: 0.25; transform: scale(0.85); transform-origin: center; }
+    50% { opacity: 1; transform: scale(1.35); transform-origin: center; filter: drop-shadow(0 0 3px currentColor); }
+  }
+  .brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .title-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .brand-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #0f172a 35%, #2563eb 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35);
+    animation: status-pulse 2s infinite;
+  }
+  @keyframes status-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 0.65; }
+  }
+  .brand-subtitle {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.3;
+  }
+  .brand-subtitle .sub-tech {
+    font-weight: 600;
+    color: #334155;
+  }
+  .tech-stack-badges {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .tech-chip {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+  }
+  .chip-safeline {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #dbeafe;
+  }
+  .chip-npm {
+    background: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+  }
+  .chip-proxmox {
+    background: #fff7ed;
+    color: #c2410c;
+    border-color: #fed7aa;
+  }
+  .chip-vmware {
+    background: #f1f5f9;
+    color: #475569;
+    border-color: #e2e8f0;
+  }
+  input {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    outline: none;
+    transition: all .15s ease-in-out;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  }
+  #meta-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 8px 2px 4px;
+    font-size: 0.82rem;
+    color: #64748b;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .count-sub {
+    color: #64748b;
+    font-size: 0.8rem;
+    margin-left: 4px;
+  }
+  .pills-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.76rem;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 9999px;
+    cursor: pointer;
+    user-select: none;
+    transition: all .15s ease-in-out;
+    border: 1px solid transparent;
+    background: transparent;
+    font-family: inherit;
+    line-height: 1.2;
+  }
+  .filter-pill b {
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 9999px;
+    font-size: 0.74rem;
+  }
+  .filter-pill.pill-all {
+    background: #f1f5f9;
+    color: #475569;
+    border-color: #e2e8f0;
+  }
+  .filter-pill.pill-all b {
+    background: #e2e8f0;
+    color: #1e293b;
+  }
+  .filter-pill.pill-all:hover, .filter-pill.pill-all.active {
+    background: #334155;
+    color: #ffffff;
+    border-color: #334155;
+  }
+  .filter-pill.pill-all:hover b, .filter-pill.pill-all.active b {
+    background: #1e293b;
+    color: #ffffff;
+  }
+  .filter-pill.pill-safeline {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+  }
+  .filter-pill.pill-safeline b {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+  .filter-pill.pill-safeline:hover, .filter-pill.pill-safeline.active {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #1d4ed8;
+  }
+  .filter-pill.pill-safeline:hover b, .filter-pill.pill-safeline.active b {
+    background: #1d4ed8;
+    color: #ffffff;
+  }
+  .filter-pill.pill-npm {
+    background: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+  }
+  .filter-pill.pill-npm b {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  .filter-pill.pill-npm:hover, .filter-pill.pill-npm.active {
+    background: #059669;
+    color: #ffffff;
+    border-color: #047857;
+  }
+  .filter-pill.pill-npm:hover b, .filter-pill.pill-npm.active b {
+    background: #047857;
+    color: #ffffff;
+  }
+  .filter-pill.pill-direct {
+    background: #f8fafc;
+    color: #64748b;
+    border-color: #e2e8f0;
+  }
+  .filter-pill.pill-direct b {
+    background: #e2e8f0;
+    color: #475569;
+  }
+  .filter-pill.pill-direct:hover, .filter-pill.pill-direct.active {
+    background: #64748b;
+    color: #ffffff;
+    border-color: #475569;
+  }
+  .filter-pill.pill-direct:hover b, .filter-pill.pill-direct.active b {
+    background: #475569;
+    color: #ffffff;
+  }
+  .pill-vm {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 9999px;
+    background: rgba(0, 0, 0, 0.05);
+    margin-left: 2px;
+    white-space: nowrap;
+    opacity: 0.9;
+  }
+  .filter-pill.pill-safeline .pill-vm {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+  .filter-pill.pill-safeline:hover .pill-vm, .filter-pill.pill-safeline.active .pill-vm {
+    background: #1e40af;
+    color: #ffffff;
+  }
+  .filter-pill.pill-npm .pill-vm {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  .filter-pill.pill-npm:hover .pill-vm, .filter-pill.pill-npm.active .pill-vm {
+    background: #047857;
+    color: #ffffff;
+  }
+  .proxy-count-row {
+    margin-top: 3px;
+    font-size: 0.78rem;
+    color: #64748b;
+  }
+  .proxy-count-row b {
+    color: #334155;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    transition: border-color .15s ease;
+  }
+  .card:hover {
+    border-color: #cbd5e1;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 7px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .domain-title {
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.01em;
+    color: #0f172a;
+  }
+  .backend-tag {
+    font-size: 0.78rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .backend-tag code {
+    font-family: ui-monospace, monospace;
+    font-weight: 600;
+    color: #0f172a;
+    background: #f1f5f9;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .badge.safeline-badge {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #dbeafe;
+  }
+  .badge.npm-badge {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+  }
+  .chain {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .box {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 7px 12px;
+    background: #f8fafc;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .box.box-unmapped {
+    background: #fff;
+    border: 1px dashed #fca5a5;
+  }
+  .box-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .box-identity {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.88rem;
+  }
+  .box-identity b {
+    color: #0f172a;
+  }
+  .box-node {
+    color: #64748b;
+    font-size: 0.76rem;
+    white-space: nowrap;
+  }
+  .box-node b {
+    color: #334155;
+    font-weight: 600;
+  }
+  .box-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 5px;
+    padding-top: 5px;
+    border-top: 1px dashed #e2e8f0;
+  }
+  .ip-list {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .ip-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+  }
+  .ip-lbl {
+    color: #64748b;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .ip-val {
+    font-family: ui-monospace, monospace;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1e293b;
+  }
+  .ip-val.pub {
+    color: #b91c1c;
+    background: #fee2e2;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  .unmapped-label {
+    color: #dc2626;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: #fef2f2;
+    border: 1px solid #fee2e2;
+    padding: 2px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  .arrow {
+    align-self: center;
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 0 4px;
+    user-select: none;
+  }
+  .safeline-action {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .safeline-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #1d4ed8;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    padding: 3px 8px;
+    border-radius: 5px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all .15s ease-in-out;
+  }
+  .safeline-btn:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    color: #1e40af;
+  }
+  .safeline-btn.pub {
+    color: #b91c1c;
+    background: #fef2f2;
+    border-color: #fecaca;
+  }
+  .safeline-btn.pub:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #991b1b;
+  }
+  .npm-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #047857;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    padding: 3px 8px;
+    border-radius: 5px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all .15s ease-in-out;
+  }
+  .npm-btn:hover {
+    background: #d1fae5;
+    border-color: #6ee7b7;
+    color: #065f46;
+  }
+  .npm-btn.pub {
+    color: #b91c1c;
+    background: #fef2f2;
+    border-color: #fecaca;
+  }
+  .npm-btn.pub:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #991b1b;
+  }
+  .empty {
+    color: #64748b;
+    margin-top: 24px;
+    text-align: center;
+    padding: 24px;
+  }
+  @media (max-width: 860px) {
+    body { width: 100%; margin: 12px auto; padding: 0 8px; }
+    .chain { flex-direction: column; gap: 6px; }
+    .arrow { align-self: flex-start; padding: 2px 0; }
+    .card-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .box-top, .box-bottom { flex-direction: column; align-items: flex-start; gap: 4px; }
+    #meta-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .radar-header { flex-direction: column; align-items: flex-start; padding: 12px; gap: 10px; }
+    .tech-stack-badges { gap: 4px; }
+  }
+</style>
+</head>
+<body>
+  <header class="radar-header">
+    <div class="radar-brand">
+      <div class="radar-illustration" aria-hidden="true" title="Domain Radar Scanner">
+        <svg class="radar-svg" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="radarSweepGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.55"/>
+              <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.05"/>
+            </linearGradient>
+          </defs>
+          <!-- Rings -->
+          <circle cx="50" cy="50" r="46" class="radar-ring" />
+          <circle cx="50" cy="50" r="31" class="radar-ring" />
+          <circle cx="50" cy="50" r="16" class="radar-ring" />
+          <!-- Crosshairs -->
+          <line x1="50" y1="4" x2="50" y2="96" class="radar-grid" />
+          <line x1="4" y1="50" x2="96" y2="50" class="radar-grid" />
+          <!-- Rotating Radar Sweep Beam -->
+          <g class="radar-sweep-group">
+            <path d="M 50 50 L 50 4 A 46 46 0 0 1 82.5 17.5 Z" class="radar-sweep" />
+            <line x1="50" y1="50" x2="82.5" y2="17.5" class="radar-sweep-line" />
+          </g>
+          <!-- Blips (Targets detected on radar) -->
+          <circle cx="68" cy="32" r="3.2" class="radar-blip blip-safeline" />
+          <circle cx="34" cy="64" r="2.8" class="radar-blip blip-npm" />
+          <circle cx="62" cy="74" r="2.5" class="radar-blip blip-vm" />
+          <!-- Center Point -->
+          <circle cx="50" cy="50" r="3.5" class="radar-center" />
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="title-row">
+          <h1 class="brand-title">Domain Radar</h1>
+          <span class="status-indicator">
+            <span class="status-dot"></span>
+            <span>Live Scanner</span>
+          </span>
+        </div>
+        <p class="brand-subtitle">
+          Peta Jalur Domain &bull; 
+          <span class="sub-tech">Safeline WAF</span> / <span class="sub-tech">NPM</span> 
+          &rarr; 
+          <span class="sub-tech">Proxmox VE</span> / <span class="sub-tech">VMware</span>
+        </p>
+      </div>
+    </div>
+    
+    <div class="tech-stack-badges">
+      <span class="tech-chip chip-safeline" title="Safeline Web Application Firewall">Safeline WAF</span>
+      <span class="tech-chip chip-npm" title="Nginx Proxy Manager">Nginx Proxy Manager</span>
+      <span class="tech-chip chip-proxmox" title="Proxmox Virtual Environment">Proxmox VE</span>
+      <span class="tech-chip chip-vmware" title="VMware ESXi & vCenter">VMware ESXi</span>
+    </div>
+  </header>
+
+  <input id="q" placeholder="Filter domain, IP, atau nama VM (contoh: beasiswa, 192.168.36, sahaja)..." autofocus>
+  <div id="meta-bar">
+    <div id="count">Memuat domain...</div>
+    <div id="filter-pills" class="pills-container"></div>
+  </div>
+  <div id="results"></div>
+
+<script>
+const input = document.getElementById('q');
+const results = document.getElementById('results');
+const countEl = document.getElementById('count');
+const pillsEl = document.getElementById('filter-pills');
+let allData = [];
+let currentTypeFilter = 'all';
+
+function getEntryType(entry) {
+  if (entry.proxy_type === 'npm' || entry.is_npm) return 'npm';
+  if (entry.proxy_type === 'safeline' || entry.is_safeline || (entry.is_proxy && !entry.is_npm)) return 'safeline';
+  return 'direct';
+}
+
+function setTypeFilter(type) {
+  if (currentTypeFilter === type) {
+    currentTypeFilter = 'all';
+  } else {
+    currentTypeFilter = type;
+  }
+  filterAndRender();
+}
+
+function formatVmBreakdown(vmsMap) {
+  let lxc = 0, qemu = 0;
+  for (const vmType of vmsMap.values()) {
+    if (vmType === 'qemu') qemu++;
+    else lxc++;
+  }
+  let parts = [];
+  if (lxc > 0) parts.push(`${lxc} LXC`);
+  if (qemu > 0) parts.push(`${qemu} VM`);
+  return parts.join(', ') || `${vmsMap.size} Host`;
+}
+
+function updatePills(counts) {
+  if (!pillsEl) return;
+  const isAll = (currentTypeFilter === 'all');
+  const isSafeline = (currentTypeFilter === 'safeline');
+  const isNpm = (currentTypeFilter === 'npm');
+  const isDirect = (currentTypeFilter === 'direct');
+
+  let directHtml = '';
+  if (counts.direct > 0) {
+    directHtml = `
+      <button type="button" class="filter-pill pill-direct${isDirect ? ' active' : ''}" onclick="setTypeFilter('direct')" title="Filter domain direct (tanpa reverse proxy)">
+        Direct <b>${counts.direct}</b>
+      </button>`;
+  }
+
+  const slVmBadge = counts.safelineVmText ? `<span class="pill-vm" title="${counts.safelineVmText} hosting Safeline">${counts.safelineVmText}</span>` : '';
+  const npmVmBadge = counts.npmVmText ? `<span class="pill-vm" title="${counts.npmVmText} hosting NPM">${counts.npmVmText}</span>` : '';
+
+  pillsEl.innerHTML = `
+    <button type="button" class="filter-pill pill-all${isAll ? ' active' : ''}" onclick="setTypeFilter('all')" title="Tampilkan semua domain">
+      Semua <b>${counts.total}</b>
+    </button>
+    <button type="button" class="filter-pill pill-safeline${isSafeline ? ' active' : ''}" onclick="setTypeFilter('safeline')" title="Filter domain di belakang Safeline (${counts.safelineVmText || '0 host'})">
+      🛡️ Safeline <b>${counts.safeline}</b>${slVmBadge}
+    </button>
+    <button type="button" class="filter-pill pill-npm${isNpm ? ' active' : ''}" onclick="setTypeFilter('npm')" title="Filter domain di belakang NPM (${counts.npmVmText || '0 host'})">
+      ⚡ NPM <b>${counts.npm}</b>${npmVmBadge}
+    </button>
+    ${directHtml}
+  `;
+}
+
+function vmBox(vm, fallbackIp, proxyType = null) {
+  let targetIp = (fallbackIp && fallbackIp !== '-') ? fallbackIp : ((vm && vm.local_ip) ? vm.local_ip : '-');
+  let localIp = (vm && vm.local_ip) ? vm.local_ip : targetIp;
+
+  let proxyLinkHtml = '';
+  if (proxyType === 'safeline' && targetIp && targetIp !== '-') {
+    let publicBtn = (vm && vm.public_ip)
+      ? `<a href="https://${vm.public_ip}:9443" target="_blank" rel="noopener noreferrer" class="safeline-btn pub" title="Buka via IP Publik">
+           ↗ Web UI (Publik): <b>https://${vm.public_ip}:9443</b>
+         </a>`
+      : '';
+    proxyLinkHtml = `
+      <div class="safeline-action">
+        <a href="https://${targetIp}:9443" target="_blank" rel="noopener noreferrer" class="safeline-btn" title="Buka via IP Lokal">
+          ↗ Web UI Safeline: <b>https://${targetIp}:9443</b>
+        </a>
+        ${publicBtn}
+      </div>`;
+  } else if (proxyType === 'npm' && targetIp && targetIp !== '-') {
+    let publicBtn = (vm && vm.public_ip)
+      ? `<a href="http://${vm.public_ip}:81" target="_blank" rel="noopener noreferrer" class="npm-btn pub" title="Buka via IP Publik">
+           ↗ Web UI (Publik): <b>http://${vm.public_ip}:81</b>
+         </a>`
+      : '';
+    proxyLinkHtml = `
+      <div class="safeline-action">
+        <a href="http://${targetIp}:81" target="_blank" rel="noopener noreferrer" class="npm-btn" title="Buka via IP Lokal">
+          ↗ Web UI NPM: <b>http://${targetIp}:81</b>
+        </a>
+        ${publicBtn}
+      </div>`;
+  }
+
+  if (!vm) {
+    return `<div class="box box-unmapped">
+      <div class="box-top"${!proxyLinkHtml ? ' style="margin:auto 0;"' : ''}>
+        <div class="box-identity">
+          <code class="ip-val">${fallbackIp || 'IP tidak dikenali'}</code>
+        </div>
+        <span class="unmapped-label">Belum terpetakan di inventory Proxmox</span>
+      </div>
+      ${proxyLinkHtml ? `<div class="box-bottom" style="justify-content:flex-end;">${proxyLinkHtml}</div>` : ''}
+    </div>`;
+  }
+
+  let publicIpHtml = vm.public_ip
+    ? `<span class="ip-item"><span class="ip-lbl">Publik</span><code class="ip-val pub">${vm.public_ip}</code></span>`
+    : '';
+  let altIpHtml = (fallbackIp && vm.local_ip && fallbackIp !== vm.local_ip && fallbackIp !== vm.public_ip)
+    ? `<span class="ip-item"><span class="ip-lbl">LAN</span><code class="ip-val">${fallbackIp}</code></span>`
+    : '';
+
+  let typeBadge = (vm.vm_type === 'vmware')
+    ? `<span class="badge" style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;">VMware (ID ${vm.vmid})</span>`
+    : `<span class="badge">VM${vm.vmid} (${vm.vm_type})</span>`;
+
+  return `<div class="box">
+    <div class="box-top">
+      <div class="box-identity">
+        <b>${vm.name || '(tanpa nama)'}</b>
+        ${typeBadge}
+      </div>
+      <div class="box-node">host: <b>${vm.proxmox_host}</b> / node: <b>${vm.node}</b></div>
+    </div>
+    <div class="box-bottom">
+      <div class="ip-list">
+        <span class="ip-item"><span class="ip-lbl">Lokal</span><code class="ip-val">${localIp}</code></span>
+        ${altIpHtml}
+        ${publicIpHtml}
+      </div>
+      ${proxyLinkHtml}
+    </div>
+  </div>`;
+}
+
+function render(data) {
+  if (data.length === 0) {
+    results.innerHTML = '<div class="empty">Tidak ada domain yang cocok dengan filter pencarian.</div>';
+    return;
+  }
+  results.innerHTML = data.map(entry => {
+    if (entry.is_proxy || entry.is_safeline || entry.is_npm) {
+      let isNpm = (entry.proxy_type === 'npm' || entry.is_npm);
+      let badgeClass = isNpm ? 'badge npm-badge' : 'badge safeline-badge';
+      let badgeText = isNpm ? 'DI BELAKANG NPM' : 'DI BELAKANG SAFELINE';
+      let ruleBadge = (entry.proxy_rule || entry.safeline_rule) ? ` (${entry.proxy_rule || entry.safeline_rule})` : '';
+      let proxyVm = entry.proxy_vm || entry.safeline_vm;
+      let ptype = isNpm ? 'npm' : 'safeline';
+
+      return `<div class="card">
+        <div class="card-header">
+          <div class="header-left">
+            <span class="domain-title">${entry.domain}</span>
+            <span class="${badgeClass}">${badgeText}${ruleBadge}</span>
+          </div>
+          <div class="header-right">
+            <span class="backend-tag">Target Backend: <code>${entry.backend_ip || '?'}:${entry.backend_port || '?'}</code></span>
+          </div>
+        </div>
+        <div class="chain">
+          ${vmBox(proxyVm, entry.found_on_ip, ptype)}
+          <span class="arrow">→ diteruskan ke →</span>
+          ${vmBox(entry.backend_vm, entry.backend_ip, null)}
+        </div>
+      </div>`;
+    }
+    return `<div class="card">
+      <div class="card-header">
+        <div class="header-left">
+          <span class="domain-title">${entry.domain}</span>
+          <span class="badge">${entry.source_type}</span>
+        </div>
+      </div>
+      <div class="chain">${vmBox(entry.web_vm, entry.found_on_ip, null)}</div>
+    </div>`;
+  }).join('');
+}
+
+function entryMatchesQuery(entry, query) {
+  if (!query) return true;
+
+  if (entry.domain && entry.domain.toLowerCase().includes(query)) return true;
+
+  if (entry.domain && entry.domain.startsWith('*.')) {
+    const baseDomain = entry.domain.slice(2).toLowerCase();
+    if (query.endsWith('.' + baseDomain) || query === baseDomain) return true;
+  }
+
+  if (entry.proxy_rule && entry.proxy_rule.toLowerCase().includes(query)) return true;
+  if (entry.safeline_rule && entry.safeline_rule.toLowerCase().includes(query)) return true;
+  if (entry.proxy_type && entry.proxy_type.toLowerCase().includes(query)) return true;
+  if (entry.source_type && entry.source_type.toLowerCase().includes(query)) return true;
+
+  if (entry.found_on_ip && entry.found_on_ip.includes(query)) return true;
+  if (entry.backend_ip && entry.backend_ip.includes(query)) return true;
+
+  const p = entry.proxy_vm || entry.safeline_vm;
+  if (p) {
+    if (p.name && p.name.toLowerCase().includes(query)) return true;
+    if (p.local_ip && p.local_ip.includes(query)) return true;
+    if (p.public_ip && p.public_ip.includes(query)) return true;
+    if (p.all_ips && p.all_ips.toLowerCase().includes(query)) return true;
+    if (p.proxmox_host && p.proxmox_host.toLowerCase().includes(query)) return true;
+    if (p.node && p.node.toLowerCase().includes(query)) return true;
+  }
+
+  const b = entry.backend_vm;
+  if (b) {
+    if (b.name && b.name.toLowerCase().includes(query)) return true;
+    if (b.local_ip && b.local_ip.includes(query)) return true;
+    if (b.public_ip && b.public_ip.includes(query)) return true;
+    if (b.all_ips && b.all_ips.toLowerCase().includes(query)) return true;
+    if (b.proxmox_host && b.proxmox_host.toLowerCase().includes(query)) return true;
+    if (b.node && b.node.toLowerCase().includes(query)) return true;
+  }
+
+  const w = entry.web_vm;
+  if (w) {
+    if (w.name && w.name.toLowerCase().includes(query)) return true;
+    if (w.local_ip && w.local_ip.includes(query)) return true;
+    if (w.public_ip && w.public_ip.includes(query)) return true;
+    if (w.all_ips && w.all_ips.toLowerCase().includes(query)) return true;
+    if (w.proxmox_host && w.proxmox_host.toLowerCase().includes(query)) return true;
+    if (w.node && w.node.toLowerCase().includes(query)) return true;
+  }
+  return false;
+}
+
+function filterAndRender() {
+  const query = input.value.trim().toLowerCase();
+  const textFiltered = allData.filter(entry => entryMatchesQuery(entry, query));
+
+  const counts = {
+    total: textFiltered.length,
+    safeline: 0,
+    npm: 0,
+    direct: 0
+  };
+
+  const safelineVms = new Map();
+  const npmVms = new Map();
+
+  for (const entry of textFiltered) {
+    const t = getEntryType(entry);
+    const p = entry.proxy_vm || entry.safeline_vm;
+    const key = p ? (p.proxmox_host + ':' + p.vmid) : entry.found_on_ip;
+    const vmType = (p && p.vm_type) ? p.vm_type.toLowerCase() : 'lxc';
+
+    if (t === 'safeline') {
+      counts.safeline++;
+      if (key) safelineVms.set(key, vmType);
+    } else if (t === 'npm') {
+      counts.npm++;
+      if (key) npmVms.set(key, vmType);
+    } else {
+      counts.direct++;
+    }
+  }
+
+  counts.safelineVmCount = safelineVms.size;
+  counts.safelineVmText = formatVmBreakdown(safelineVms);
+  counts.npmVmCount = npmVms.size;
+  counts.npmVmText = formatVmBreakdown(npmVms);
+  counts.totalProxyVmCount = safelineVms.size + npmVms.size;
+
+  updatePills(counts);
+
+  const finalFiltered = (currentTypeFilter === 'all')
+    ? textFiltered
+    : textFiltered.filter(entry => getEntryType(entry) === currentTypeFilter);
+
+  const proxyBreakdown = [];
+  if (counts.safelineVmCount > 0) proxyBreakdown.push(`<b>${counts.safelineVmText}</b> Safeline`);
+  if (counts.npmVmCount > 0) proxyBreakdown.push(`<b>${counts.npmVmText}</b> NPM`);
+  const proxyDetailText = proxyBreakdown.length ? ` <span class="count-sub">(${proxyBreakdown.join(', ')})</span>` : '';
+
+  const proxyRowHtml = `<div class="proxy-count-row">Proxy Host: <b>${counts.totalProxyVmCount}</b> LXC/VM${proxyDetailText}</div>`;
+
+  if (!query && currentTypeFilter === 'all') {
+    countEl.innerHTML = `<div>Total <b>${allData.length}</b> domain terdaftar <span class="count-sub">(<b>${counts.safeline}</b> Safeline, <b>${counts.npm}</b> NPM)</span></div>${proxyRowHtml}`;
+  } else {
+    let filterLabels = [];
+    if (currentTypeFilter !== 'all') {
+      filterLabels.push(currentTypeFilter.toUpperCase());
+    }
+    if (query) {
+      filterLabels.push(`"${query}"`);
+    }
+    let filterText = filterLabels.length ? ` [${filterLabels.join(', ')}]` : '';
+    countEl.innerHTML = `<div>Menampilkan <b>${finalFiltered.length}</b> dari <b>${allData.length}</b> domain${filterText} <span class="count-sub">(<b>${counts.safeline}</b> Safeline, <b>${counts.npm}</b> NPM)</span></div>${proxyRowHtml}`;
+  }
+
+  render(finalFiltered);
+}
+
+function loadDomains() {
+  results.innerHTML = '<div class="empty">Memuat daftar domain...</div>';
+  fetch('/api/search')
+    .then(r => r.json())
+    .then(data => {
+      allData = data;
+      filterAndRender();
+    })
+    .catch(err => {
+      results.innerHTML = '<div class="empty" style="color:#d9534f;">Gagal memuat domain: ' + err + '</div>';
+    });
+}
+
+input.addEventListener('input', filterAndRender);
+loadDomains();
+</script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+# Salin file ini jadi config.yaml lalu isi sesuai environment kamu.
+
+database_path: "inventory.db"
+
+# Semua 30+ host Proxmox kamu (standalone atau cluster, tetap didaftar satu-satu per host/cluster).
+# CUKUP isi info SSH di sini -- token API akan dibuat OTOMATIS oleh onboard_proxmox_nodes.py
+# dan disimpan terpisah di credentials.yaml (jangan taruh secret di file ini).
+proxmox_hosts:
+  - name: "pve-node1"
+    api_host: "10.0.0.1"          # IP/hostname untuk akses API (port 8006)
+    ssh_host: "10.0.0.1"          # biasanya sama dengan api_host, dipakai HANYA saat onboarding
+    ssh_user: "root"
+    ssh_key_path: "/root/.ssh/id_rsa_inventory"
+    ssh_port: 22
+    verify_ssl: false
+  - name: "pve-node2"
+    api_host: "10.0.0.2"
+    ssh_host: "10.0.0.2"
+    ssh_user: "root"
+    ssh_key_path: "/root/.ssh/id_rsa_inventory"
+    ssh_port: 22
+    verify_ssl: false
+  # ... tambahkan sisa host Proxmox di sini (cukup info SSH, tanpa token)
+
+# Kredensial SSH default untuk scan config nginx/aapanel di dalam VM.
+# Diasumsikan kamu pakai 1 key yang sama untuk sebagian besar VM (>90% kasusmu).
+ssh_default:
+  user: "root"
+  key_path: "/root/.ssh/id_rsa_inventory"
+  port: 22
+  timeout: 8
+
+# VM yang tidak bisa di-SSH otomatis (firewall/isolasi network) -> isi manual di sini,
+# supaya tetap tercatat di sistem yang sama walau datanya statis.
+manual_overrides:
+  # - domain: "internal-app.contoh.com"
+  #   source_type: "nginx"
+  #   found_on_ip: "10.10.5.20"
+
+# Semua instance Safeline (dibaca lewat Open API, bukan SSH).
+safeline_hosts:
+  - local_ip: "10.0.5.10"         # IP lokal VM tempat Safeline ini jalan
+    api_base: "https://10.0.5.10:9443"
+    api_token: "TOKEN_DARI_SYSTEM_MANAGEMENT_SAFELINE"
+  # ... tambahkan sisa instance Safeline di sini
+
+# Semua instance Nginx Proxy Manager / NPM (dibaca lewat REST API port 81).
+npm_hosts:
+  - local_ip: "10.0.5.15"         # IP lokal VM tempat NPM ini jalan
+    api_base: "http://10.0.5.15:81"
+    username: "admin@example.com" # Email login NPM
+    password: "changeme"          # Password login NPM
+    verify_ssl: false
+  # ... tambahkan sisa instance NPM di sini bila ada lebih dari satu
+
+# Host VMware (vCenter & ESXi Standalone)
+vmware_hosts:
+  # Cluster vCenter (otomatis menarik semua VM dari seluruh node ESXi)
+  - name: "vcenter"
+    host: "10.0.0.10"
+    user: "administrator@vsphere.local" # Cukup user read-only
+    password: "password_vcenter"
+    port: 443
+    verify_ssl: false
+
+  # Node ESXi Standalone
+  - name: "esxi-standalone"
+    host: "192.168.1.50"
+    user: "root"
+    password: "password_esxi"
+    port: 443
+    verify_ssl: false
+
