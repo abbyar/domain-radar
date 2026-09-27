@@ -4,6 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Domain Radar — Multi-Hypervisor & Proxy Inventory</title>
+<script>
+  (function() {
+    try {
+      var saved = localStorage.getItem('domain_radar_theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    } catch (e) {}
+  })();
+</script>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -14,6 +27,10 @@
     padding: 0 8px;
     background: #f8fafc;
     color: #1e293b;
+    transition: background-color .2s ease, color .2s ease;
+  }
+  .radar-header, .card, .box, input {
+    transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease, color .2s ease;
   }
   
   /* Domain Radar Brand Header */
@@ -561,6 +578,11 @@
     color: #047857;
     border: 1px solid #a7f3d0;
   }
+  .badge.badge-vmware {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+  }
   .chain {
     display: flex;
     align-items: stretch;
@@ -737,6 +759,388 @@
     text-align: center;
     padding: 24px;
   }
+
+  /* Theme Toggle Button */
+  .theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 5px 11px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s ease-in-out;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    font-family: inherit;
+    user-select: none;
+    height: 33px;
+  }
+  .theme-toggle-btn:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #94a3b8;
+  }
+  .theme-toggle-btn:active {
+    transform: translateY(1px);
+  }
+  .theme-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+  }
+  .theme-icon-wrapper svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Dark Theme Overrides */
+  [data-theme="dark"] body {
+    background: #090d16;
+    color: #f1f5f9;
+  }
+  [data-theme="dark"] .radar-header {
+    background: #111827;
+    border-color: #1f2937;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+  [data-theme="dark"] .radar-illustration {
+    box-shadow: 0 0 0 2px #374151, 0 4px 12px rgba(0, 0, 0, 0.6);
+  }
+  [data-theme="dark"] .brand-title {
+    background: linear-gradient(135deg, #f8fafc 35%, #60a5fa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  [data-theme="dark"] .brand-subtitle {
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .brand-subtitle .sub-tech {
+    color: #e2e8f0;
+  }
+  [data-theme="dark"] .status-indicator {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border-color: rgba(16, 185, 129, 0.3);
+  }
+  [data-theme="dark"] .status-indicator.scanning {
+    background: rgba(37, 99, 235, 0.15);
+    color: #60a5fa;
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+  [data-theme="dark"] .chip-safeline {
+    background: rgba(37, 99, 235, 0.15);
+    color: #93c5fd;
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+  [data-theme="dark"] .chip-npm {
+    background: rgba(16, 185, 129, 0.15);
+    color: #6ee7b7;
+    border-color: rgba(16, 185, 129, 0.3);
+  }
+  [data-theme="dark"] .chip-proxmox {
+    background: rgba(234, 88, 12, 0.15);
+    color: #fdba74;
+    border-color: rgba(249, 115, 22, 0.3);
+  }
+  [data-theme="dark"] .chip-vmware {
+    background: rgba(100, 116, 139, 0.2);
+    color: #cbd5e1;
+    border-color: rgba(148, 163, 184, 0.25);
+  }
+  [data-theme="dark"] .rescan-container {
+    background: #1e293b;
+    border-color: #334155;
+  }
+  [data-theme="dark"] .rescan-mode-select {
+    color: #cbd5e1;
+    background: transparent;
+  }
+  [data-theme="dark"] .rescan-mode-select:focus {
+    background: #0f172a;
+    color: #f8fafc;
+  }
+  [data-theme="dark"] .rescan-mode-select option {
+    background: #1e293b;
+    color: #f1f5f9;
+  }
+  [data-theme="dark"] .theme-toggle-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+  [data-theme="dark"] .theme-toggle-btn:hover {
+    background: #283548;
+    color: #f8fafc;
+    border-color: #475569;
+  }
+  [data-theme="dark"] #rescan-banner {
+    background: rgba(30, 64, 175, 0.2);
+    border-color: rgba(59, 130, 246, 0.35);
+    color: #93c5fd;
+  }
+  [data-theme="dark"] #rescan-banner.completed {
+    background: rgba(6, 95, 70, 0.25);
+    border-color: rgba(16, 185, 129, 0.35);
+    color: #6ee7b7;
+  }
+  [data-theme="dark"] #rescan-banner.error {
+    background: rgba(153, 27, 27, 0.25);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+  }
+  [data-theme="dark"] .banner-spinner {
+    border-color: rgba(147, 197, 253, 0.25);
+    border-top-color: #60a5fa;
+  }
+  [data-theme="dark"] input {
+    background: #111827;
+    border-color: #374151;
+    color: #f8fafc;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+  [data-theme="dark"] input::placeholder {
+    color: #64748b;
+  }
+  [data-theme="dark"] input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  }
+  [data-theme="dark"] #meta-bar,
+  [data-theme="dark"] .count-sub,
+  [data-theme="dark"] .proxy-count-row {
+    color: #94a3b8;
+  }
+  [data-theme="dark"] #count b,
+  [data-theme="dark"] .proxy-count-row b {
+    color: #e2e8f0;
+  }
+  [data-theme="dark"] .filter-pill.pill-all {
+    background: #1e293b;
+    color: #94a3b8;
+    border-color: #334155;
+  }
+  [data-theme="dark"] .filter-pill.pill-all b {
+    background: #334155;
+    color: #f1f5f9;
+  }
+  [data-theme="dark"] .filter-pill.pill-all:hover,
+  [data-theme="dark"] .filter-pill.pill-all.active {
+    background: #334155;
+    color: #ffffff;
+    border-color: #475569;
+  }
+  [data-theme="dark"] .filter-pill.pill-all:hover b,
+  [data-theme="dark"] .filter-pill.pill-all.active b {
+    background: #475569;
+    color: #ffffff;
+  }
+  [data-theme="dark"] .filter-pill.pill-safeline {
+    background: rgba(37, 99, 235, 0.15);
+    color: #93c5fd;
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+  [data-theme="dark"] .filter-pill.pill-safeline b {
+    background: rgba(37, 99, 235, 0.3);
+    color: #bfdbfe;
+  }
+  [data-theme="dark"] .filter-pill.pill-safeline:hover,
+  [data-theme="dark"] .filter-pill.pill-safeline.active {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #3b82f6;
+  }
+  [data-theme="dark"] .filter-pill.pill-safeline:hover b,
+  [data-theme="dark"] .filter-pill.pill-safeline.active b {
+    background: #1d4ed8;
+    color: #ffffff;
+  }
+  [data-theme="dark"] .filter-pill.pill-npm {
+    background: rgba(16, 185, 129, 0.15);
+    color: #6ee7b7;
+    border-color: rgba(16, 185, 129, 0.3);
+  }
+  [data-theme="dark"] .filter-pill.pill-npm b {
+    background: rgba(16, 185, 129, 0.3);
+    color: #a7f3d0;
+  }
+  [data-theme="dark"] .filter-pill.pill-npm:hover,
+  [data-theme="dark"] .filter-pill.pill-npm.active {
+    background: #059669;
+    color: #ffffff;
+    border-color: #10b981;
+  }
+  [data-theme="dark"] .filter-pill.pill-npm:hover b,
+  [data-theme="dark"] .filter-pill.pill-npm.active b {
+    background: #047857;
+    color: #ffffff;
+  }
+  [data-theme="dark"] .filter-pill.pill-direct {
+    background: #1e293b;
+    color: #94a3b8;
+    border-color: #334155;
+  }
+  [data-theme="dark"] .filter-pill.pill-direct b {
+    background: #334155;
+    color: #cbd5e1;
+  }
+  [data-theme="dark"] .filter-pill.pill-direct:hover,
+  [data-theme="dark"] .filter-pill.pill-direct.active {
+    background: #475569;
+    color: #ffffff;
+    border-color: #64748b;
+  }
+  [data-theme="dark"] .filter-pill.pill-direct:hover b,
+  [data-theme="dark"] .filter-pill.pill-direct.active b {
+    background: #64748b;
+    color: #ffffff;
+  }
+  [data-theme="dark"] .pill-vm {
+    background: rgba(255, 255, 255, 0.08);
+  }
+  [data-theme="dark"] .filter-pill.pill-safeline .pill-vm {
+    background: rgba(37, 99, 235, 0.3);
+    color: #93c5fd;
+  }
+  [data-theme="dark"] .filter-pill.pill-safeline:hover .pill-vm,
+  [data-theme="dark"] .filter-pill.pill-safeline.active .pill-vm {
+    background: #1e40af;
+    color: #ffffff;
+  }
+  [data-theme="dark"] .filter-pill.pill-npm .pill-vm {
+    background: rgba(16, 185, 129, 0.3);
+    color: #6ee7b7;
+  }
+  [data-theme="dark"] .filter-pill.pill-npm:hover .pill-vm,
+  [data-theme="dark"] .filter-pill.pill-npm.active .pill-vm {
+    background: #047857;
+    color: #ffffff;
+  }
+  [data-theme="dark"] .card {
+    background: #111827;
+    border-color: #1f2937;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+  [data-theme="dark"] .card:hover {
+    border-color: #374151;
+  }
+  [data-theme="dark"] .domain-title {
+    color: #f1f5f9;
+  }
+  [data-theme="dark"] .backend-tag {
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .backend-tag code {
+    color: #f1f5f9;
+    background: #1e293b;
+    border-color: #334155;
+  }
+  [data-theme="dark"] .badge {
+    background: #1e293b;
+    color: #cbd5e1;
+    border: 1px solid #334155;
+  }
+  [data-theme="dark"] .badge.safeline-badge {
+    background: rgba(37, 99, 235, 0.2);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.35);
+  }
+  [data-theme="dark"] .badge.npm-badge {
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+  }
+  [data-theme="dark"] .badge.badge-vmware {
+    background: rgba(21, 128, 61, 0.2);
+    color: #86efac;
+    border: 1px solid rgba(34, 197, 94, 0.35);
+  }
+  [data-theme="dark"] .box {
+    background: #161f30;
+    border-color: #233148;
+  }
+  [data-theme="dark"] .box.box-unmapped {
+    background: #1a1616;
+    border-color: #7f1d1d;
+  }
+  [data-theme="dark"] .box-identity b {
+    color: #f8fafc;
+  }
+  [data-theme="dark"] .box-node {
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .box-node b {
+    color: #cbd5e1;
+  }
+  [data-theme="dark"] .box-bottom {
+    border-top: 1px dashed #233148;
+  }
+  [data-theme="dark"] .ip-lbl {
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .ip-val {
+    color: #e2e8f0;
+  }
+  [data-theme="dark"] .ip-val.pub {
+    color: #fca5a5;
+    background: rgba(185, 28, 28, 0.25);
+  }
+  [data-theme="dark"] .unmapped-label {
+    color: #f87171;
+    background: rgba(220, 38, 38, 0.15);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+  [data-theme="dark"] .arrow {
+    color: #64748b;
+  }
+  [data-theme="dark"] .safeline-btn {
+    color: #93c5fd;
+    background: rgba(37, 99, 235, 0.18);
+    border-color: rgba(59, 130, 246, 0.35);
+  }
+  [data-theme="dark"] .safeline-btn:hover {
+    background: rgba(37, 99, 235, 0.32);
+    border-color: #60a5fa;
+    color: #eff6ff;
+  }
+  [data-theme="dark"] .safeline-btn.pub {
+    color: #fca5a5;
+    background: rgba(185, 28, 28, 0.2);
+    border-color: rgba(239, 68, 68, 0.35);
+  }
+  [data-theme="dark"] .safeline-btn.pub:hover {
+    background: rgba(185, 28, 28, 0.35);
+    border-color: #f87171;
+  }
+  [data-theme="dark"] .npm-btn {
+    color: #6ee7b7;
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.35);
+  }
+  [data-theme="dark"] .npm-btn:hover {
+    background: rgba(16, 185, 129, 0.32);
+    border-color: #34d399;
+    color: #ecfdf5;
+  }
+  [data-theme="dark"] .npm-btn.pub {
+    color: #fca5a5;
+    background: rgba(185, 28, 28, 0.2);
+    border-color: rgba(239, 68, 68, 0.35);
+  }
+  [data-theme="dark"] .npm-btn.pub:hover {
+    background: rgba(185, 28, 28, 0.35);
+    border-color: #f87171;
+  }
+  [data-theme="dark"] .empty {
+    color: #94a3b8;
+  }
   @media (max-width: 860px) {
     body { width: 100%; margin: 12px auto; padding: 0 8px; }
     .chain { flex-direction: column; gap: 6px; }
@@ -819,6 +1223,12 @@
           <span id="rescan-label">Rescan</span>
         </button>
       </div>
+
+      <!-- Theme Toggle Feature -->
+      <button id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleTheme()" type="button" aria-label="Toggle light or dark theme" title="Toggle theme">
+        <span id="theme-icon-container" class="theme-icon-wrapper"></span>
+        <span id="theme-text">Dark</span>
+      </button>
     </div>
   </header>
 
@@ -979,7 +1389,7 @@ function vmBox(vm, fallbackIp, proxyType = null) {
     : '';
 
   let typeBadge = (vm.vm_type === 'vmware')
-    ? `<span class="badge" style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;">VMware (ID ${vm.vmid})</span>`
+    ? `<span class="badge badge-vmware">VMware (ID ${vm.vmid})</span>`
     : `<span class="badge">VM${vm.vmid} (${vm.vm_type})</span>`;
 
   return `<div class="box">
@@ -1284,6 +1694,59 @@ function checkInitialRescanStatus() {
     })
     .catch(() => {});
 }
+
+/* Dark / Light Theme Toggle Management */
+function getPreferredTheme() {
+  const saved = localStorage.getItem('domain_radar_theme');
+  if (saved === 'dark' || saved === 'light') return saved;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function updateThemeUI(theme) {
+  const iconContainer = document.getElementById('theme-icon-container');
+  const themeText = document.getElementById('theme-text');
+  const toggleBtn = document.getElementById('theme-toggle-btn');
+  
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    if (iconContainer) {
+      iconContainer.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+      </svg>`;
+    }
+    if (themeText) themeText.textContent = 'Light';
+    if (toggleBtn) toggleBtn.title = 'Switch to Light mode';
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light');
+    if (iconContainer) {
+      iconContainer.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+      </svg>`;
+    }
+    if (themeText) themeText.textContent = 'Dark';
+    if (toggleBtn) toggleBtn.title = 'Switch to Dark mode';
+  }
+}
+
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('domain_radar_theme', newTheme);
+  updateThemeUI(newTheme);
+}
+
+// Sync with system preferences if user hasn't explicitly set a preference
+try {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (!localStorage.getItem('domain_radar_theme')) {
+      updateThemeUI(e.matches ? 'dark' : 'light');
+    }
+  });
+} catch (e) {}
+
+// Initialize theme UI
+updateThemeUI(getPreferredTheme());
 
 input.addEventListener('input', filterAndRender);
 loadDomains();
