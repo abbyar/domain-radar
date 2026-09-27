@@ -962,6 +962,15 @@ function vmBox(vm, fallbackIp, proxyType = null) {
     </div>`;
   }
 
+  let isOnlyPublic = (vm.public_ip && (!vm.local_ip || vm.local_ip === vm.public_ip) && (!fallbackIp || fallbackIp === vm.public_ip));
+  let localIpHtml = '';
+  if (!isOnlyPublic) {
+    let displayLocal = (vm.local_ip && vm.local_ip !== '-') ? vm.local_ip : (fallbackIp !== vm.public_ip ? fallbackIp : '-');
+    if (displayLocal && displayLocal !== '-') {
+      localIpHtml = `<span class="ip-item"><span class="ip-lbl">Local</span><code class="ip-val">${displayLocal}</code></span>`;
+    }
+  }
+
   let publicIpHtml = vm.public_ip
     ? `<span class="ip-item"><span class="ip-lbl">Public</span><code class="ip-val pub">${vm.public_ip}</code></span>`
     : '';
@@ -983,7 +992,7 @@ function vmBox(vm, fallbackIp, proxyType = null) {
     </div>
     <div class="box-bottom">
       <div class="ip-list">
-        <span class="ip-item"><span class="ip-lbl">Local</span><code class="ip-val">${localIp}</code></span>
+        ${localIpHtml}
         ${altIpHtml}
         ${publicIpHtml}
       </div>

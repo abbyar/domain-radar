@@ -42,19 +42,27 @@ def get_conn():
     return conn
 
 
-def resolve_vm(conn, ip):
-    """Find VM/LXC details by local IP, public IP, or secondary IPs on multi-NIC VMs."""
+def resolve_vm(conn, ip, prefer_host=None):
+    """Find VM/LXC details by local IP, public IP, or secondary IPs on multi-NIC VMs.
+    If prefer_host is specified, prioritize matching VM on the same Proxmox host
+    (crucial when different standalone nodes use the same internal subnet e.g. 10.10.10.x)."""
     if not ip:
         return None
-    row = conn.execute(
+    rows = conn.execute(
         """SELECT proxmox_host, node, vmid, name, vm_type, status, local_ip, public_ip, all_ips 
            FROM proxmox_vms 
            WHERE local_ip = ? 
               OR public_ip = ? 
               OR instr(',' || COALESCE(all_ips, '') || ',', ',' || ? || ',') > 0""",
         (ip, ip, ip),
-    ).fetchone()
-    return dict(row) if row else None
+    ).fetchall()
+    if not rows:
+        return None
+    if prefer_host:
+        for r in rows:
+            if r["proxmox_host"] == prefer_host:
+                return dict(r)
+    return dict(rows[0])
 
 
 def search_domain(domain=""):
@@ -102,19 +110,32 @@ def search_domain(domain=""):
             entry["safeline_vm"] = entry["proxy_vm"]
             entry["backend_ip"] = row["upstream_ip"]
             entry["backend_port"] = row["upstream_port"]
-            entry["backend_vm"] = resolve_vm(conn, row["upstream_ip"])
+            proxy_host = entry["proxy_vm"]["proxmox_host"] if entry["proxy_vm"] else None
+            entry["backend_vm"] = resolve_vm(conn, row["upstream_ip"], prefer_host=proxy_host)
         else:
             # Check if the VM hosting this web config is protected by Safeline or NPM (direct or wildcard)
             parts = row["domain"].split(".")
             wildcard_parent = "*." + ".".join(parts[1:]) if len(parts) >= 2 else None
-            proxy_row = conn.execute(
+            web_host = entry["web_vm"]["proxmox_host"] if entry.get("web_vm") else None
+            proxy_rows = conn.execute(
                 """SELECT * FROM domain_map 
                    WHERE source_type IN ('safeline', 'npm') 
                      AND upstream_ip = ? 
                      AND (domain = ? OR domain = ?)
                    ORDER BY CASE WHEN source_type = 'safeline' THEN 0 ELSE 1 END""",
                 (row["found_on_ip"], row["domain"], wildcard_parent or ""),
-            ).fetchone()
+            ).fetchall()
+
+            proxy_row = None
+            if proxy_rows:
+                if web_host:
+                    for pr in proxy_rows:
+                        pvm = resolve_vm(conn, pr["found_on_ip"])
+                        if pvm and pvm.get("proxmox_host") == web_host:
+                            proxy_row = pr
+                            break
+                if not proxy_row:
+                    proxy_row = proxy_rows[0]
 
             if proxy_row:
                 ptype = proxy_row["source_type"]
@@ -122,7 +143,7 @@ def search_domain(domain=""):
                 entry["proxy_type"] = ptype
                 entry["is_safeline"] = (ptype == "safeline")
                 entry["is_npm"] = (ptype == "npm")
-                entry["proxy_vm"] = resolve_vm(conn, proxy_row["found_on_ip"])
+                entry["proxy_vm"] = resolve_vm(conn, proxy_row["found_on_ip"], prefer_host=web_host)
                 entry["safeline_vm"] = entry["proxy_vm"]
                 entry["found_on_ip"] = proxy_row["found_on_ip"]
                 entry["backend_ip"] = row["found_on_ip"]

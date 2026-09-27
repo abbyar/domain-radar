@@ -17,10 +17,25 @@ SEARCH_PATHS = [
 ]
 
 GREP_CMD = (
-    "grep -rhoP '(?<=server_name\\s)[^;]+' " + " ".join(SEARCH_PATHS) + " 2>/dev/null"
+    "grep -rhoP --exclude='*bak*' --exclude='*.old' --exclude='*.disabled' --exclude='*~' --exclude='*.save' '(?<=server_name\\s)[^;]+' "
+    + " ".join(SEARCH_PATHS)
+    + " 2>/dev/null"
 )
 
-IGNORE_TOKENS = {"_", "localhost", "127.0.0.1", "default_server", "none"}
+IGNORE_TOKENS = {
+    "_",
+    "localhost",
+    "127.0.0.1",
+    "default_server",
+    "none",
+    "localhost-nginx-proxy-manager",
+    "nginxproxymanager",
+    "phpmyadmin",
+    "example.com",
+    "example.org",
+    "example.net",
+    "*.example.com",
+}
 
 
 def scan_vm(ip, ssh_cfg):
@@ -45,7 +60,7 @@ def scan_vm(ip, ssh_cfg):
     for line in output.splitlines():
         for token in line.split():
             token = token.strip().rstrip(";")
-            if token and token not in IGNORE_TOKENS and not token.startswith("~"):
+            if token and token not in IGNORE_TOKENS and not token.startswith("~") and "." in token:
                 domains.add(token.lower())
     return domains
 
@@ -74,7 +89,7 @@ def scan_lxc_on_host(host_cfg, vmid):
     for line in output.splitlines():
         for token in line.split():
             token = token.strip().rstrip(";")
-            if token and token not in IGNORE_TOKENS and not token.startswith("~"):
+            if token and token not in IGNORE_TOKENS and not token.startswith("~") and "." in token:
                 domains.add(token.lower())
     return domains
 

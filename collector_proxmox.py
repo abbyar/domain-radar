@@ -46,8 +46,8 @@ def extract_ip_pair(ip_candidates):
         if ip.startswith("192.168."):
             local_ip = ip
             break
-    if not local_ip:
-        local_ip = local_ips[0] if local_ips else (public_ips[0] if public_ips else None)
+    if not local_ip and local_ips:
+        local_ip = local_ips[0]
 
     public_ip = public_ips[0] if public_ips else None
     return local_ip, public_ip, all_ips_str
