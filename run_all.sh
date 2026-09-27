@@ -1,7 +1,7 @@
 #!/bin/bash
-# Jalankan semua collector secara berurutan. Cocok dipanggil dari cron.
-# Contoh crontab (scan tiap jam):
-#   0 * * * * cd /path/ke/domain-radar && ./run_all.sh >> scan.log 2>&1
+# Run all collectors sequentially. Suitable for invocation via cron.
+# Example crontab (hourly scan):
+#   0 * * * * cd /path/to/domain-radar && ./run_all.sh >> scan.log 2>&1
 set -e
 cd "$(dirname "$0")"
 

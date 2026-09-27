@@ -1,6 +1,6 @@
 """
-Kumpulkan daftar VM + IP dari VMware vCenter dan ESXi Standalone yang didaftarkan di config.yaml.
-Aman dijalankan berulang kali (upsert ke tabel proxmox_vms dengan vm_type='vmware').
+Collect VM list + IPs from VMware vCenter and ESXi Standalone hosts listed in config.yaml.
+Safe to run repeatedly (upsert to proxmox_vms table with vm_type='vmware').
 """
 import ssl
 import re
@@ -12,7 +12,7 @@ try:
     from pyVim.connect import SmartConnect, Disconnect
     from pyVmomi import vim
 except ImportError:
-    print("[vmware] PERINGATAN: Library pyvmomi belum terinstall. Jalankan: pip install pyvmomi")
+    print("[vmware] WARNING: pyvmomi library is not installed. Run: pip install pyvmomi")
     SmartConnect = None
     Disconnect = None
     vim = None
@@ -50,7 +50,7 @@ def extract_ip_pair(ip_candidates):
     all_ips = list(dict.fromkeys(local_ips + public_ips))
     all_ips_str = ",".join(all_ips) if all_ips else None
 
-    # Untuk local_ip: prioritaskan subnet LAN 192.168.x.x bila ada, lalu 10.x.x.x
+    # For local_ip: prioritize 192.168.x.x LAN subnet if present, then 10.x.x.x
     local_ip = None
     for ip in local_ips:
         if ip.startswith("192.168."):
@@ -83,7 +83,7 @@ def get_vm_ips(vm):
     except Exception:
         pass
 
-    # Fallback ke summary.guest jika guest object belum penuh
+    # Fallback to summary.guest if guest object is not fully populated
     if not candidates:
         try:
             if hasattr(vm, "summary") and hasattr(vm.summary, "guest") and vm.summary.guest:
@@ -96,7 +96,7 @@ def get_vm_ips(vm):
 
 
 def parse_vmid(mo_id, name):
-    """Ambil integer unik dari moId VMware (mis. 'vm-123' -> 123)."""
+    """Extract unique integer from VMware moId (e.g. 'vm-123' -> 123)."""
     match = re.search(r"\d+", mo_id or "")
     if match:
         return int(match.group())
@@ -112,17 +112,17 @@ def collect_host(h_cfg, conn):
     verify_ssl = h_cfg.get("verify_ssl", False)
 
     if not password or "ISI_PASSWORD" in password or password == "...":
-        print(f"  [vmware] {host_label} ({host_ip}): Password belum diisi di config.yaml, dilewati.")
+        print(f"  [vmware] {host_label} ({host_ip}): Password not configured in config.yaml, skipping.")
         return 0
 
-    print(f"[vmware] Menghubungi {host_label} ({host_ip}) ...")
+    print(f"[vmware] Connecting to {host_label} ({host_ip}) ...")
 
     ssl_context = None if verify_ssl else ssl._create_unverified_context()
 
     try:
         si = SmartConnect(host=host_ip, user=user, pwd=password, port=port, sslContext=ssl_context)
     except Exception as e:
-        print(f"  [vmware] GAGAL koneksi ke {host_label} ({host_ip}): {e}")
+        print(f"  [vmware] FAILED connecting to {host_label} ({host_ip}): {e}")
         return 0
 
     cur = conn.cursor()
@@ -137,16 +137,16 @@ def collect_host(h_cfg, conn):
 
         for vm in vms:
             try:
-                # Lewati template VM
+                # Skip VM templates
                 if hasattr(vm, "config") and vm.config and vm.config.template:
                     continue
                 if hasattr(vm, "summary") and hasattr(vm.summary, "config") and vm.summary.config and vm.summary.config.template:
                     continue
 
-                name = vm.name or "(tanpa nama)"
+                name = vm.name or "(unnamed)"
                 vmid = parse_vmid(getattr(vm, "_moId", ""), name)
 
-                # Node ESXi tempat VM berjalan
+                # ESXi host node where the VM runs
                 node_name = "esxi"
                 try:
                     if vm.runtime and vm.runtime.host:
@@ -154,7 +154,7 @@ def collect_host(h_cfg, conn):
                 except Exception:
                     pass
 
-                # Status daya
+                # Power status
                 is_running = False
                 try:
                     if vm.runtime and vm.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
@@ -163,7 +163,7 @@ def collect_host(h_cfg, conn):
                     pass
                 status = "running" if is_running else "stopped"
 
-                # Ekstrak IP
+                # Extract IPs
                 local_ip, public_ip, all_ips = get_vm_ips(vm)
 
                 cur.execute(
@@ -183,38 +183,38 @@ def collect_host(h_cfg, conn):
                 )
                 count += 1
             except Exception as e:
-                print(f"  [vmware] Gagal memproses VM {getattr(vm, 'name', '?')}: {e}")
+                print(f"  [vmware] Failed processing VM {getattr(vm, 'name', '?')}: {e}")
 
         conn.commit()
         container_view.Destroy()
     except Exception as e:
-        print(f"  [vmware] Error saat mengambil daftar VM dari {host_label}: {e}")
+        print(f"  [vmware] Error fetching VM list from {host_label}: {e}")
     finally:
         try:
             Disconnect(si)
         except Exception:
             pass
 
-    print(f"  [vmware] {count} VM berhasil disimpan dari {host_label}")
+    print(f"  [vmware] {count} VMs successfully saved from {host_label}")
     return count
 
 
 def collect(config, db_path):
     if not SmartConnect:
-        print("[vmware] pyvmomi tidak tersedia, lewati proses koleksi VMware.")
+        print("[vmware] pyvmomi is not available, skipping VMware collection.")
         return
 
     vmware_hosts = config.get("vmware_hosts", [])
     if not vmware_hosts:
-        print("[vmware] Tidak ada vmware_hosts di config.yaml, proses dilewati.")
+        print("[vmware] No vmware_hosts configured in config.yaml, skipping.")
         return
 
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, timeout=30.0)
     total = 0
     for h_cfg in vmware_hosts:
         total += collect_host(h_cfg, conn)
     conn.close()
-    print(f"[vmware] Selesai. Total {total} VM VMware diperbarui.")
+    print(f"[vmware] Completed. Total {total} VMware VMs updated.")
 
 
 if __name__ == "__main__":

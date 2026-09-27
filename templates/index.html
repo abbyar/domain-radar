@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -131,6 +131,12 @@
     border-radius: 9999px;
     letter-spacing: 0.02em;
     text-transform: uppercase;
+    transition: all .2s ease;
+  }
+  .status-indicator.scanning {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
   }
   .status-dot {
     width: 6px;
@@ -139,6 +145,10 @@
     background: #10b981;
     box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35);
     animation: status-pulse 2s infinite;
+  }
+  .status-indicator.scanning .status-dot {
+    background: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35);
   }
   @keyframes status-pulse {
     0%, 100% { transform: scale(1); opacity: 1; }
@@ -153,6 +163,14 @@
   .brand-subtitle .sub-tech {
     font-weight: 600;
     color: #334155;
+  }
+  
+  /* Header Right Section & Actions */
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
   }
   .tech-stack-badges {
     display: flex;
@@ -187,6 +205,123 @@
     color: #475569;
     border-color: #e2e8f0;
   }
+
+  /* Rescan UI Controls */
+  .rescan-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 3px 4px;
+  }
+  .rescan-mode-select {
+    background: transparent;
+    border: none;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: #475569;
+    padding: 4px 6px;
+    outline: none;
+    cursor: pointer;
+    border-radius: 5px;
+    font-family: inherit;
+  }
+  .rescan-mode-select:focus {
+    background: #ffffff;
+  }
+  .rescan-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #2563eb;
+    color: #ffffff;
+    border: 1px solid #1d4ed8;
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s ease-in-out;
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+    font-family: inherit;
+  }
+  .rescan-btn:hover:not(:disabled) {
+    background: #1d4ed8;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+  }
+  .rescan-btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+  .rescan-btn:disabled {
+    background: #94a3b8;
+    border-color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.85;
+    box-shadow: none;
+  }
+  .rescan-icon {
+    transition: transform .3s ease;
+  }
+  .rescan-btn.scanning .rescan-icon {
+    animation: rescan-spin 1s linear infinite;
+  }
+  @keyframes rescan-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Scan Progress Banner */
+  #rescan-banner {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin-bottom: 12px;
+    font-size: 0.82rem;
+    color: #1e40af;
+    animation: banner-fade-in .2s ease-out;
+  }
+  #rescan-banner.visible {
+    display: flex;
+  }
+  #rescan-banner.completed {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #065f46;
+  }
+  #rescan-banner.error {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+  }
+  .banner-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .banner-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(29, 78, 216, 0.25);
+    border-top-color: #1d4ed8;
+    border-radius: 50%;
+    animation: banner-spin 0.8s linear infinite;
+  }
+  @keyframes banner-spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes banner-fade-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Search & Filter Controls */
   input {
     width: 100%;
     padding: 10px 14px;
@@ -351,6 +486,8 @@
   .proxy-count-row b {
     color: #334155;
   }
+
+  /* Card and Chain Topology */
   .card {
     background: #fff;
     border: 1px solid #e2e8f0;
@@ -608,6 +745,7 @@
     .box-top, .box-bottom { flex-direction: column; align-items: flex-start; gap: 4px; }
     #meta-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
     .radar-header { flex-direction: column; align-items: flex-start; padding: 12px; gap: 10px; }
+    .header-actions { width: 100%; justify-content: space-between; }
     .tech-stack-badges { gap: 4px; }
   }
 </style>
@@ -646,13 +784,13 @@
       <div class="brand-text">
         <div class="title-row">
           <h1 class="brand-title">Domain Radar</h1>
-          <span class="status-indicator">
+          <span id="scanner-status" class="status-indicator">
             <span class="status-dot"></span>
-            <span>Live Scanner</span>
+            <span id="scanner-status-text">Live Scanner</span>
           </span>
         </div>
         <p class="brand-subtitle">
-          Peta Jalur Domain &bull; 
+          Domain Routing Map &bull; 
           <span class="sub-tech">Safeline WAF</span> / <span class="sub-tech">NPM</span> 
           &rarr; 
           <span class="sub-tech">Proxmox VE</span> / <span class="sub-tech">VMware</span>
@@ -660,17 +798,42 @@
       </div>
     </div>
     
-    <div class="tech-stack-badges">
-      <span class="tech-chip chip-safeline" title="Safeline Web Application Firewall">Safeline WAF</span>
-      <span class="tech-chip chip-npm" title="Nginx Proxy Manager">Nginx Proxy Manager</span>
-      <span class="tech-chip chip-proxmox" title="Proxmox Virtual Environment">Proxmox VE</span>
-      <span class="tech-chip chip-vmware" title="VMware ESXi & vCenter">VMware ESXi</span>
+    <div class="header-actions">
+      <div class="tech-stack-badges">
+        <span class="tech-chip chip-safeline" title="Safeline Web Application Firewall">Safeline WAF</span>
+        <span class="tech-chip chip-npm" title="Nginx Proxy Manager">Nginx Proxy Manager</span>
+        <span class="tech-chip chip-proxmox" title="Proxmox Virtual Environment">Proxmox VE</span>
+        <span class="tech-chip chip-vmware" title="VMware ESXi & vCenter">VMware ESXi</span>
+      </div>
+
+      <!-- Rescan Feature -->
+      <div class="rescan-container">
+        <select id="rescan-mode" class="rescan-mode-select" title="Select scan mode">
+          <option value="false">Full Scan (All + SSH)</option>
+          <option value="true">Quick Scan (Skip SSH)</option>
+        </select>
+        <button id="rescan-btn" class="rescan-btn" onclick="startRescan()" title="Rescan hypervisors, proxies, and web servers">
+          <svg id="rescan-icon" class="rescan-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19"/>
+          </svg>
+          <span id="rescan-label">Rescan</span>
+        </button>
+      </div>
     </div>
   </header>
 
-  <input id="q" placeholder="Filter domain, IP, atau nama VM (contoh: beasiswa, 192.168.36, sahaja)..." autofocus>
+  <!-- Live Rescan Progress Banner -->
+  <div id="rescan-banner">
+    <div class="banner-left">
+      <div id="banner-spinner" class="banner-spinner"></div>
+      <span id="banner-message">Initiating rescan pipeline...</span>
+    </div>
+    <span id="banner-step" style="font-weight: 600; font-size: 0.78rem;"></span>
+  </div>
+
+  <input id="q" placeholder="Filter by domain, IP, or VM name (e.g., mysite, 192.168.36, web-app)..." autofocus>
   <div id="meta-bar">
-    <div id="count">Memuat domain...</div>
+    <div id="count">Loading domains...</div>
     <div id="filter-pills" class="pills-container"></div>
   </div>
   <div id="results"></div>
@@ -680,8 +843,20 @@ const input = document.getElementById('q');
 const results = document.getElementById('results');
 const countEl = document.getElementById('count');
 const pillsEl = document.getElementById('filter-pills');
+const rescanBtn = document.getElementById('rescan-btn');
+const rescanLabel = document.getElementById('rescan-label');
+const rescanMode = document.getElementById('rescan-mode');
+const rescanBanner = document.getElementById('rescan-banner');
+const bannerSpinner = document.getElementById('banner-spinner');
+const bannerMessage = document.getElementById('banner-message');
+const bannerStep = document.getElementById('banner-step');
+const scannerStatus = document.getElementById('scanner-status');
+const scannerStatusText = document.getElementById('scanner-status-text');
+
 let allData = [];
 let currentTypeFilter = 'all';
+let rescanPollTimer = null;
+let bannerTimeout = null;
 
 function getEntryType(entry) {
   if (entry.proxy_type === 'npm' || entry.is_npm) return 'npm';
@@ -707,7 +882,7 @@ function formatVmBreakdown(vmsMap) {
   let parts = [];
   if (lxc > 0) parts.push(`${lxc} LXC`);
   if (qemu > 0) parts.push(`${qemu} VM`);
-  return parts.join(', ') || `${vmsMap.size} Host`;
+  return parts.join(', ') || `${vmsMap.size} Hosts`;
 }
 
 function updatePills(counts) {
@@ -720,7 +895,7 @@ function updatePills(counts) {
   let directHtml = '';
   if (counts.direct > 0) {
     directHtml = `
-      <button type="button" class="filter-pill pill-direct${isDirect ? ' active' : ''}" onclick="setTypeFilter('direct')" title="Filter domain direct (tanpa reverse proxy)">
+      <button type="button" class="filter-pill pill-direct${isDirect ? ' active' : ''}" onclick="setTypeFilter('direct')" title="Filter direct domains (no reverse proxy)">
         Direct <b>${counts.direct}</b>
       </button>`;
   }
@@ -729,13 +904,13 @@ function updatePills(counts) {
   const npmVmBadge = counts.npmVmText ? `<span class="pill-vm" title="${counts.npmVmText} hosting NPM">${counts.npmVmText}</span>` : '';
 
   pillsEl.innerHTML = `
-    <button type="button" class="filter-pill pill-all${isAll ? ' active' : ''}" onclick="setTypeFilter('all')" title="Tampilkan semua domain">
-      Semua <b>${counts.total}</b>
+    <button type="button" class="filter-pill pill-all${isAll ? ' active' : ''}" onclick="setTypeFilter('all')" title="Show all domains">
+      All <b>${counts.total}</b>
     </button>
-    <button type="button" class="filter-pill pill-safeline${isSafeline ? ' active' : ''}" onclick="setTypeFilter('safeline')" title="Filter domain di belakang Safeline (${counts.safelineVmText || '0 host'})">
+    <button type="button" class="filter-pill pill-safeline${isSafeline ? ' active' : ''}" onclick="setTypeFilter('safeline')" title="Filter domains behind Safeline (${counts.safelineVmText || '0 hosts'})">
       🛡️ Safeline <b>${counts.safeline}</b>${slVmBadge}
     </button>
-    <button type="button" class="filter-pill pill-npm${isNpm ? ' active' : ''}" onclick="setTypeFilter('npm')" title="Filter domain di belakang NPM (${counts.npmVmText || '0 host'})">
+    <button type="button" class="filter-pill pill-npm${isNpm ? ' active' : ''}" onclick="setTypeFilter('npm')" title="Filter domains behind NPM (${counts.npmVmText || '0 hosts'})">
       ⚡ NPM <b>${counts.npm}</b>${npmVmBadge}
     </button>
     ${directHtml}
@@ -749,27 +924,27 @@ function vmBox(vm, fallbackIp, proxyType = null) {
   let proxyLinkHtml = '';
   if (proxyType === 'safeline' && targetIp && targetIp !== '-') {
     let publicBtn = (vm && vm.public_ip)
-      ? `<a href="https://${vm.public_ip}:9443" target="_blank" rel="noopener noreferrer" class="safeline-btn pub" title="Buka via IP Publik">
-           ↗ Web UI (Publik): <b>https://${vm.public_ip}:9443</b>
+      ? `<a href="https://${vm.public_ip}:9443" target="_blank" rel="noopener noreferrer" class="safeline-btn pub" title="Open via Public IP">
+           ↗ Web UI (Public): <b>https://${vm.public_ip}:9443</b>
          </a>`
       : '';
     proxyLinkHtml = `
       <div class="safeline-action">
-        <a href="https://${targetIp}:9443" target="_blank" rel="noopener noreferrer" class="safeline-btn" title="Buka via IP Lokal">
-          ↗ Web UI Safeline: <b>https://${targetIp}:9443</b>
+        <a href="https://${targetIp}:9443" target="_blank" rel="noopener noreferrer" class="safeline-btn" title="Open via Local IP">
+          ↗ Safeline Web UI: <b>https://${targetIp}:9443</b>
         </a>
         ${publicBtn}
       </div>`;
   } else if (proxyType === 'npm' && targetIp && targetIp !== '-') {
     let publicBtn = (vm && vm.public_ip)
-      ? `<a href="http://${vm.public_ip}:81" target="_blank" rel="noopener noreferrer" class="npm-btn pub" title="Buka via IP Publik">
-           ↗ Web UI (Publik): <b>http://${vm.public_ip}:81</b>
+      ? `<a href="http://${vm.public_ip}:81" target="_blank" rel="noopener noreferrer" class="npm-btn pub" title="Open via Public IP">
+           ↗ Web UI (Public): <b>http://${vm.public_ip}:81</b>
          </a>`
       : '';
     proxyLinkHtml = `
       <div class="safeline-action">
-        <a href="http://${targetIp}:81" target="_blank" rel="noopener noreferrer" class="npm-btn" title="Buka via IP Lokal">
-          ↗ Web UI NPM: <b>http://${targetIp}:81</b>
+        <a href="http://${targetIp}:81" target="_blank" rel="noopener noreferrer" class="npm-btn" title="Open via Local IP">
+          ↗ NPM Web UI: <b>http://${targetIp}:81</b>
         </a>
         ${publicBtn}
       </div>`;
@@ -779,16 +954,16 @@ function vmBox(vm, fallbackIp, proxyType = null) {
     return `<div class="box box-unmapped">
       <div class="box-top"${!proxyLinkHtml ? ' style="margin:auto 0;"' : ''}>
         <div class="box-identity">
-          <code class="ip-val">${fallbackIp || 'IP tidak dikenali'}</code>
+          <code class="ip-val">${fallbackIp || 'Unknown IP'}</code>
         </div>
-        <span class="unmapped-label">Belum terpetakan di inventory Proxmox</span>
+        <span class="unmapped-label">Not mapped in hypervisor inventory</span>
       </div>
       ${proxyLinkHtml ? `<div class="box-bottom" style="justify-content:flex-end;">${proxyLinkHtml}</div>` : ''}
     </div>`;
   }
 
   let publicIpHtml = vm.public_ip
-    ? `<span class="ip-item"><span class="ip-lbl">Publik</span><code class="ip-val pub">${vm.public_ip}</code></span>`
+    ? `<span class="ip-item"><span class="ip-lbl">Public</span><code class="ip-val pub">${vm.public_ip}</code></span>`
     : '';
   let altIpHtml = (fallbackIp && vm.local_ip && fallbackIp !== vm.local_ip && fallbackIp !== vm.public_ip)
     ? `<span class="ip-item"><span class="ip-lbl">LAN</span><code class="ip-val">${fallbackIp}</code></span>`
@@ -801,14 +976,14 @@ function vmBox(vm, fallbackIp, proxyType = null) {
   return `<div class="box">
     <div class="box-top">
       <div class="box-identity">
-        <b>${vm.name || '(tanpa nama)'}</b>
+        <b>${vm.name || '(unnamed)'}</b>
         ${typeBadge}
       </div>
       <div class="box-node">host: <b>${vm.proxmox_host}</b> / node: <b>${vm.node}</b></div>
     </div>
     <div class="box-bottom">
       <div class="ip-list">
-        <span class="ip-item"><span class="ip-lbl">Lokal</span><code class="ip-val">${localIp}</code></span>
+        <span class="ip-item"><span class="ip-lbl">Local</span><code class="ip-val">${localIp}</code></span>
         ${altIpHtml}
         ${publicIpHtml}
       </div>
@@ -819,14 +994,14 @@ function vmBox(vm, fallbackIp, proxyType = null) {
 
 function render(data) {
   if (data.length === 0) {
-    results.innerHTML = '<div class="empty">Tidak ada domain yang cocok dengan filter pencarian.</div>';
+    results.innerHTML = '<div class="empty">No domains match the search filter.</div>';
     return;
   }
   results.innerHTML = data.map(entry => {
     if (entry.is_proxy || entry.is_safeline || entry.is_npm) {
       let isNpm = (entry.proxy_type === 'npm' || entry.is_npm);
       let badgeClass = isNpm ? 'badge npm-badge' : 'badge safeline-badge';
-      let badgeText = isNpm ? 'DI BELAKANG NPM' : 'DI BELAKANG SAFELINE';
+      let badgeText = isNpm ? 'BEHIND NPM' : 'BEHIND SAFELINE';
       let ruleBadge = (entry.proxy_rule || entry.safeline_rule) ? ` (${entry.proxy_rule || entry.safeline_rule})` : '';
       let proxyVm = entry.proxy_vm || entry.safeline_vm;
       let ptype = isNpm ? 'npm' : 'safeline';
@@ -838,12 +1013,12 @@ function render(data) {
             <span class="${badgeClass}">${badgeText}${ruleBadge}</span>
           </div>
           <div class="header-right">
-            <span class="backend-tag">Target Backend: <code>${entry.backend_ip || '?'}:${entry.backend_port || '?'}</code></span>
+            <span class="backend-tag">Backend Target: <code>${entry.backend_ip || '?'}:${entry.backend_port || '?'}</code></span>
           </div>
         </div>
         <div class="chain">
           ${vmBox(proxyVm, entry.found_on_ip, ptype)}
-          <span class="arrow">→ diteruskan ke →</span>
+          <span class="arrow">→ forwarded to →</span>
           ${vmBox(entry.backend_vm, entry.backend_ip, null)}
         </div>
       </div>`;
@@ -958,10 +1133,10 @@ function filterAndRender() {
   if (counts.npmVmCount > 0) proxyBreakdown.push(`<b>${counts.npmVmText}</b> NPM`);
   const proxyDetailText = proxyBreakdown.length ? ` <span class="count-sub">(${proxyBreakdown.join(', ')})</span>` : '';
 
-  const proxyRowHtml = `<div class="proxy-count-row">Proxy Host: <b>${counts.totalProxyVmCount}</b> LXC/VM${proxyDetailText}</div>`;
+  const proxyRowHtml = `<div class="proxy-count-row">Proxy Hosts: <b>${counts.totalProxyVmCount}</b> LXC/VM${proxyDetailText}</div>`;
 
   if (!query && currentTypeFilter === 'all') {
-    countEl.innerHTML = `<div>Total <b>${allData.length}</b> domain terdaftar <span class="count-sub">(<b>${counts.safeline}</b> Safeline, <b>${counts.npm}</b> NPM)</span></div>${proxyRowHtml}`;
+    countEl.innerHTML = `<div>Total <b>${allData.length}</b> registered domains <span class="count-sub">(<b>${counts.safeline}</b> Safeline, <b>${counts.npm}</b> NPM)</span></div>${proxyRowHtml}`;
   } else {
     let filterLabels = [];
     if (currentTypeFilter !== 'all') {
@@ -971,14 +1146,14 @@ function filterAndRender() {
       filterLabels.push(`"${query}"`);
     }
     let filterText = filterLabels.length ? ` [${filterLabels.join(', ')}]` : '';
-    countEl.innerHTML = `<div>Menampilkan <b>${finalFiltered.length}</b> dari <b>${allData.length}</b> domain${filterText} <span class="count-sub">(<b>${counts.safeline}</b> Safeline, <b>${counts.npm}</b> NPM)</span></div>${proxyRowHtml}`;
+    countEl.innerHTML = `<div>Showing <b>${finalFiltered.length}</b> of <b>${allData.length}</b> domains${filterText} <span class="count-sub">(<b>${counts.safeline}</b> Safeline, <b>${counts.npm}</b> NPM)</span></div>${proxyRowHtml}`;
   }
 
   render(finalFiltered);
 }
 
 function loadDomains() {
-  results.innerHTML = '<div class="empty">Memuat daftar domain...</div>';
+  countEl.innerHTML = 'Loading domains...';
   fetch('/api/search')
     .then(r => r.json())
     .then(data => {
@@ -986,12 +1161,124 @@ function loadDomains() {
       filterAndRender();
     })
     .catch(err => {
-      results.innerHTML = '<div class="empty" style="color:#d9534f;">Gagal memuat domain: ' + err + '</div>';
+      results.innerHTML = '<div class="empty" style="color:#dc2626;">Failed to load domains: ' + err + '</div>';
     });
+}
+
+/* Rescan Management */
+function startRescan() {
+  const skipSsh = rescanMode.value === "true";
+  rescanBtn.disabled = true;
+  rescanBtn.classList.add('scanning');
+  rescanLabel.textContent = 'Starting...';
+
+  fetch('/api/rescan', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ skip_ssh: skipSsh })
+  })
+    .then(async r => {
+      const contentType = r.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        throw new Error(`Server returned ${r.status} ${r.statusText}. The Flask server needs to be restarted.`);
+      }
+      const data = await r.json();
+      if (!r.ok && r.status !== 409) {
+        throw new Error(data.message || `HTTP ${r.status}`);
+      }
+      return data;
+    })
+    .then(data => {
+      pollRescanStatus();
+    })
+    .catch(err => {
+      showRescanToast('Error starting rescan: ' + err.message, 'error');
+      resetRescanButton();
+    });
+}
+
+function pollRescanStatus() {
+  if (rescanPollTimer) clearInterval(rescanPollTimer);
+
+  rescanPollTimer = setInterval(() => {
+    fetch('/api/rescan/status')
+      .then(async r => {
+        const contentType = r.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) {
+          throw new Error(`Server returned ${r.status}`);
+        }
+        return await r.json();
+      })
+      .then(state => {
+        if (state.is_running) {
+          rescanBtn.disabled = true;
+          rescanBtn.classList.add('scanning');
+          
+          let stepText = state.step_index ? `[${state.step_index}/${state.total_steps}]` : '';
+          rescanLabel.textContent = `Scanning ${stepText}`;
+          
+          scannerStatus.classList.add('scanning');
+          scannerStatusText.textContent = 'Scanning...';
+
+          rescanBanner.className = 'visible';
+          bannerSpinner.style.display = 'block';
+          bannerMessage.textContent = state.current_step || 'Running inventory collectors...';
+          bannerStep.textContent = stepText ? `Step ${state.step_index} of ${state.total_steps}` : '';
+        } else {
+          clearInterval(rescanPollTimer);
+          rescanPollTimer = null;
+          resetRescanButton();
+
+          if (state.status === 'completed') {
+            showRescanToast(`✅ Rescan completed in ${state.duration}s! Reloading inventory...`, 'completed');
+            loadDomains();
+          } else if (state.status === 'error') {
+            showRescanToast(`❌ Rescan failed: ${state.error || state.current_step}`, 'error');
+          }
+        }
+      })
+      .catch(err => {
+        console.error("Rescan poll error:", err);
+      });
+  }, 1200);
+}
+
+function resetRescanButton() {
+  rescanBtn.disabled = false;
+  rescanBtn.classList.remove('scanning');
+  rescanLabel.textContent = 'Rescan';
+  scannerStatus.classList.remove('scanning');
+  scannerStatusText.textContent = 'Live Scanner';
+}
+
+function showRescanToast(msg, type) {
+  if (bannerTimeout) clearTimeout(bannerTimeout);
+
+  rescanBanner.className = `visible ${type}`;
+  bannerSpinner.style.display = 'none';
+  bannerMessage.textContent = msg;
+  bannerStep.textContent = '';
+
+  bannerTimeout = setTimeout(() => {
+    rescanBanner.className = '';
+  }, 6000);
+}
+
+// Check on initial page load if a rescan is already running
+function checkInitialRescanStatus() {
+  fetch('/api/rescan/status')
+    .then(r => r.json())
+    .then(state => {
+      if (state.is_running) {
+        pollRescanStatus();
+      }
+    })
+    .catch(() => {});
 }
 
 input.addEventListener('input', filterAndRender);
 loadDomains();
+checkInitialRescanStatus();
 </script>
 </body>
 </html>

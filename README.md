@@ -1,7 +1,7 @@
 # 📡 Domain Radar
 
 > **Multi-Hypervisor & Reverse Proxy Inventory System**  
-> *Lacak dan petakan domain web, reverse proxy (Safeline WAF / Nginx Proxy Manager), hingga ke VM/LXC di Proxmox VE & VMware vSphere.*
+> *Trace and map web domains, reverse proxies (Safeline WAF / Nginx Proxy Manager), down to backend VMs/LXCs across Proxmox VE & VMware vSphere.*
 
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Framework-Flask%203.x-green.svg)](https://flask.palletsprojects.com/)
@@ -12,42 +12,43 @@
 
 ---
 
-## 📌 Mengapa Domain Radar?
+## 📌 Why Domain Radar?
 
-Di infrastruktur berskala menengah hingga besar dengan puluhan host **Proxmox VE**, cluster **VMware vCenter/ESXi**, serta berbagai **WAF** dan **Reverse Proxy** (seperti Chaitin Safeline WAF dan Nginx Proxy Manager), melacak asal-usul sebuah domain sering kali menjadi mimpi buruk tim SysAdmin / DevOps:
+In medium to large infrastructure environments spanning dozens of **Proxmox VE** nodes, **VMware vCenter/ESXi** clusters, alongside various **WAFs** and **Reverse Proxies** (such as Chaitin Safeline WAF and Nginx Proxy Manager), tracking the exact origin and route of a domain is often challenging for SysAdmin & DevOps teams:
 
-- *"Domain `app.perusahaan.com` ini sebenarnya di-hosting di VM mana?"*
-- *"Apakah traffic domain ini diproteksi oleh Safeline WAF atau diteruskan oleh Nginx Proxy Manager?"*
-- *"VM proxy-nya berada di node mana, dan backend web server-nya berjalan di IP lokal mana?"*
-- *"VM ini memiliki IP publik atau IP lokal apa saja di lingkungan multi-NIC?"*
+- *"Which VM is actually hosting `app.example.com`?"*
+- *"Is traffic for this domain protected by Safeline WAF or forwarded through Nginx Proxy Manager?"*
+- *"Which node is the proxy VM running on, and which internal IP is the backend web server using?"*
+- *"What local or public IPs are assigned to this VM across multi-NIC setups?"*
 
-**Domain Radar** dibangun untuk menjawab pertanyaan-pertanyaan tersebut secara instan. Tool ini secara otomatis mengumpulkan data topologi infrastruktur dari hypervisor dan reverse proxy, menyimpannya dalam basis data SQLite lokal, dan menyediakannya dalam antarmuka Web UI yang interaktif dan cepat.
+**Domain Radar** is built to answer these questions instantly. It automatically discovers infrastructure topology from hypervisors and reverse proxies, stores it in a fast local SQLite database, and presents it in a responsive, interactive Web UI dashboard.
 
 ---
 
-## ✨ Fitur Utama
+## ✨ Key Features
 
 - 🖥️ **Multi-Hypervisor Support**:
-  - **Proxmox VE**: Onboarding otomatis hypervisor via SSH, pembuatan user `inventory@pve` dengan peran read-only (`PVEAuditor`), pembuatan API Token otomatis, pengumpulan data VM (QEMU) dan Container (LXC), serta resolusi IP lokal/publik multi-NIC.
-  - **VMware vSphere & ESXi Standalone**: Menggunakan `pyvmomi` untuk menarik seluruh daftar VM lintas cluster vCenter dan host ESXi standalone secara aman dan otomatis.
+  - **Proxmox VE**: Automated hypervisor onboarding via SSH, creation of dedicated read-only `inventory@pve` user (`PVEAuditor` & `AgentMonitor`), automated API token provisioning, VM (QEMU) & Container (LXC) data collection, and multi-NIC local/public IP resolution.
+  - **VMware vSphere & ESXi Standalone**: Uses `pyvmomi` to securely and automatically retrieve all VMs across vCenter clusters and standalone ESXi hosts.
 - 🛡️ **Reverse Proxy & WAF Discovery**:
-  - **Chaitin Safeline WAF**: Integrasi Open API (v6.6.0+) untuk membaca daftar domain terlindungi beserta target upstream IP dan port backend.
-  - **Nginx Proxy Manager (NPM)**: Integrasi REST API (autentikasi JWT token) untuk mengekstrak seluruh proxy host, domain list, dan forward scheme/port.
+  - **Chaitin Safeline WAF**: Open API integration (v6.6.0+) to read protected domains with target backend upstream IPs and ports.
+  - **Nginx Proxy Manager (NPM)**: REST API integration (JWT token authentication) to extract all proxy hosts, domain lists, and forward configurations.
 - 🔍 **Direct Web Server Inspection**:
-  - Scan otomatis file konfigurasi web server Nginx dan aaPanel via SSH untuk membaca direktif `server_name`.
-  - Mendukung `manual_overrides` untuk VM atau host yang berada di balik DMZ/firewall tanpa akses SSH.
+  - Automatic SSH inspection of Nginx and aaPanel configuration files to parse `server_name` directives.
+  - Supports `manual_overrides` for isolated VMs or DMZ hosts without direct SSH access.
 - 🔗 **End-to-End Topology Tracing**:
-  - Menghubungkan alur: `Domain` ➔ `WAF / Proxy Host` ➔ `Backend VM` ➔ `Hypervisor Node & VMID`.
-  - Mendukung pencarian domain presisi maupun wildcard (`*.domain.com`).
+  - Connects the entire flow: `Domain` ➔ `WAF / Proxy Host` ➔ `Backend VM` ➔ `Hypervisor Node & VMID`.
+  - Supports exact domain matching and wildcard patterns (`*.domain.com`).
 - ⚡ **Lightweight Web UI & REST API**:
-  - Web UI modern dengan visual radar animasi, pencarian instan, filter kategori (All, Safeline WAF, Nginx Proxy Manager, Direct Web), dan status cards.
-  - Endpoint REST API (`/api/search`, `/api/stats`) siap diintegrasikan dengan tooling internal lainnya.
+  - Clean web dashboard with animated radar graphic, instant search, category filters (All, Safeline WAF, Nginx Proxy Manager, Direct Web), and status cards.
+  - One-click **Rescan** feature with real-time progress banner and mode selection (Full scan vs Quick scan).
+  - REST API endpoints (`/api/search`, `/api/stats`, `/api/rescan`, `/api/rescan/status`) ready for custom integration.
 - 🔄 **One-Command Pipeline & Automation**:
-  - Script pipeline terpadu (`run_all.py`, `run_all.bat`, `run_all.ps1`, `run_all.sh`) untuk menjalankan sinkronisasi berurutan dengan opsi `--skip-ssh` dan `--serve`.
+  - Unified pipeline scripts (`run_all.py`, `run_all.bat`, `run_all.ps1`, `run_all.sh`) with `--skip-ssh` and `--serve` options.
 
 ---
 
-## 🏗️ Arsitektur Sistem
+## 🏗️ System Architecture
 
 ```mermaid
 flowchart TD
@@ -78,8 +79,8 @@ flowchart TD
 
     subgraph PRESENTATION ["User Interface & API"]
         WEB["Flask Web Application<br/>(app.py - port 5000)"]
-        UI["Web UI Dashboard<br/>(Search & Topology View)"]
-        API["REST API<br/>(/api/search, /api/stats)"]
+        UI["Web UI Dashboard<br/>(Search, Topology View & Rescan)"]
+        API["REST API<br/>(/api/search, /api/stats, /api/rescan)"]
     end
 
     PVE -->|Provision Token| C_ONB
@@ -104,131 +105,131 @@ flowchart TD
 
 ---
 
-## 📁 Struktur Direktori
+## 📁 Directory Structure
 
 ```text
 domain-radar/
-├── app.py                      # Aplikasi Flask (Web UI & REST API pencarian)
-├── collector_domains.py        # Scanner domain via SSH ke VM guest (Nginx & aaPanel)
-├── collector_npm.py            # Collector Nginx Proxy Manager (REST API)
-├── collector_proxmox.py        # Collector Proxmox VE (VM/LXC & IP extraction)
-├── collector_safeline.py       # Collector Chaitin Safeline WAF (Open API)
-├── collector_vmware.py         # Collector VMware vCenter & ESXi Standalone (pyvmomi)
-├── config.example.yaml         # Template konfigurasi sistem
-├── config.yaml                 # Konfigurasi aktif (JANGAN di-commit ke Git)
-├── credentials.yaml            # Kredensial token Proxmox (auto-generated, JANGAN di-commit)
+├── app.py                      # Flask Application (Web UI, REST API & Rescan Worker)
+├── collector_domains.py        # Guest VM Domain Scanner via SSH (Nginx & aaPanel)
+├── collector_npm.py            # Nginx Proxy Manager Collector (REST API)
+├── collector_proxmox.py        # Proxmox VE Collector (VM/LXC & IP extraction)
+├── collector_safeline.py       # Chaitin Safeline WAF Collector (Open API)
+├── collector_vmware.py         # VMware vCenter & ESXi Standalone Collector (pyvmomi)
+├── config.example.yaml         # Configuration template
+├── config.yaml                 # Active configuration (DO NOT commit to Git)
+├── credentials.yaml            # Proxmox token credentials (auto-generated, DO NOT commit)
 ├── db/
-│   └── schema.sql              # Skema tabel SQLite (proxmox_vms & domain_map)
-├── init_db.py                  # Script inisialisasi & migrasi database SQLite
-├── inventory.db                # Database SQLite hasil scan (JANGAN di-commit)
-├── onboard_proxmox_nodes.py    # Auto-onboarding host Proxmox baru via SSH
-├── requirements.txt            # Daftar pustaka dependency Python
-├── run_all.bat                 # Runner satu-klik untuk Windows Command Prompt
-├── run_all.ps1                 # Runner untuk Windows PowerShell
-├── run_all.py                  # Runner utama Python lintas sistem operasi
-├── run_all.sh                  # Runner untuk Linux / macOS (cocok untuk Cron)
+│   └── schema.sql              # SQLite schema (proxmox_vms & domain_map)
+├── init_db.py                  # SQLite database initialization & WAL configuration
+├── inventory.db                # SQLite database storing scanned inventory
+├── onboard_proxmox_nodes.py    # Automated SSH onboarding for new Proxmox hosts
+├── requirements.txt            # Python dependencies
+├── run_all.bat                 # One-click runner for Windows Command Prompt
+├── run_all.ps1                 # Runner script for Windows PowerShell
+├── run_all.py                  # Main cross-platform Python pipeline runner
+├── run_all.sh                  # Shell script runner for Linux / macOS (cron-friendly)
 └── templates/
-    └── index.html              # Antarmuka Web Dashboard dengan live radar view
+    └── index.html              # Web Dashboard with live radar graphics & rescan control
 ```
 
 ---
 
-## 🚀 Panduan Instalasi & Persiapan
+## 🚀 Installation & Setup Guide
 
-### 1. Prasyarat Sistem
-- Python 3.9 atau versi yang lebih baru
-- Akses jaringan ke:
-  - Host Proxmox VE (port 8006 API, port 22 SSH untuk onboarding)
-  - VMware vCenter / ESXi (port 443 HTTPS)
-  - Safeline WAF (port 9443 HTTPS)
-  - Nginx Proxy Manager (port 81 HTTP/HTTPS)
-  - VM guest yang dapat di-SSH (port 22)
+### 1. Prerequisites
+- Python 3.9 or newer
+- Network connectivity to:
+  - Proxmox VE hosts (API port 8006, SSH port 22 for one-time onboarding)
+  - VMware vCenter / ESXi (HTTPS port 443)
+  - Safeline WAF (HTTPS port 9443)
+  - Nginx Proxy Manager (HTTP/HTTPS port 81)
+  - Guest VMs reachable via SSH (port 22)
 
-### 2. Clone Repositori & Setup Virtual Environment
+### 2. Clone Repository & Setup Virtual Environment
 ```bash
 # Clone repository
 git clone https://github.com/username/domain-radar.git
 cd domain-radar
 
-# Buat virtual environment
+# Create virtual environment
 python -m venv venv
 
-# Aktifkan virtual environment
-# Di Linux / macOS:
+# Activate virtual environment
+# On Linux / macOS:
 source venv/bin/activate
-# Di Windows PowerShell:
+# On Windows PowerShell:
 .\venv\Scripts\Activate.ps1
-# Di Windows Command Prompt:
+# On Windows Command Prompt:
 .\venv\Scripts\activate.bat
 
-# Install dependensi
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 3. Inisialisasi Database
-Jalankan script inisialisasi database SQLite:
+### 3. Initialize Database
+Initialize the SQLite database schema:
 ```bash
 python init_db.py
 ```
-*(Atau gunakan perintah SQLite CLI: `sqlite3 inventory.db < db/schema.sql`)*
+*(Or manually via SQLite CLI: `sqlite3 inventory.db < db/schema.sql`)*
 
 ---
 
-## ⚙️ Konfigurasi (`config.yaml`)
+## ⚙️ Configuration (`config.yaml`)
 
-Salin template konfigurasi `config.example.yaml` menjadi `config.yaml`:
+Copy the configuration template:
 ```bash
 cp config.example.yaml config.yaml
 ```
 
-Buka dan sesuaikan `config.yaml` dengan lingkungan Anda:
+Edit `config.yaml` to match your infrastructure:
 
 ```yaml
 database_path: "inventory.db"
 
-# 1. Daftar Host Proxmox VE
-# Cukup isi info SSH di sini. API token akan dibuat OTOMATIS oleh onboard_proxmox_nodes.py
-# dan disimpan terpisah di credentials.yaml (role read-only PVEAuditor).
+# 1. Proxmox VE Hosts
+# Fill SSH information here. API tokens are generated AUTOMATICALLY by onboard_proxmox_nodes.py
+# and stored securely in credentials.yaml (read-only PVEAuditor role).
 proxmox_hosts:
   - name: "pve-node-01"
-    api_host: "10.0.0.1"          # Host/IP akses API (port 8006)
-    ssh_host: "10.0.0.1"          # Host/IP untuk SSH onboarding awal
+    api_host: "10.0.0.1"          # Host/IP for API access (port 8006)
+    ssh_host: "10.0.0.1"          # Host/IP for initial SSH onboarding
     ssh_user: "root"
     ssh_key_path: "~/.ssh/id_rsa_inventory"
     ssh_port: 22
     verify_ssl: false
 
-# 2. Kredensial SSH Default untuk Scan Virtual Host di VM Guest
+# 2. Default SSH Credentials for Scanning Virtual Hosts on Guest VMs
 ssh_default:
   user: "root"
   key_path: "~/.ssh/id_rsa_inventory"
   port: 22
   timeout: 8
 
-# 3. Instance Chaitin Safeline WAF (Open API)
+# 3. Chaitin Safeline WAF Instances (Open API)
 safeline_hosts:
-  - local_ip: "10.0.5.10"         # IP VM/LXC tempat Safeline berjalan
+  - local_ip: "10.0.5.10"         # VM/LXC IP hosting Safeline
     api_base: "https://10.0.5.10:9443"
-    api_token: "YOUR_SAFELINE_API_TOKEN" # Dari menu System Management Safeline
+    api_token: "YOUR_SAFELINE_API_TOKEN" # From Safeline System Management menu
 
-# 4. Instance Nginx Proxy Manager (REST API)
+# 4. Nginx Proxy Manager Instances (REST API)
 npm_hosts:
-  - local_ip: "10.0.5.15"         # IP VM/LXC tempat NPM berjalan
+  - local_ip: "10.0.5.15"         # VM/LXC IP hosting NPM
     api_base: "http://10.0.5.15:81"
     username: "admin@example.com"
     password: "your_npm_password"
     verify_ssl: false
 
-# 5. Host VMware vCenter / ESXi Standalone
+# 5. VMware vCenter / ESXi Standalone Hosts
 vmware_hosts:
-  # Cluster vCenter (otomatis menarik semua VM dari semua node ESXi yang terhubung)
+  # vCenter Cluster (automatically gathers all VMs from all connected ESXi nodes)
   - name: "vcenter-cluster"
     host: "10.0.0.10"
     user: "readonly-user@vsphere.local"
     password: "your_vcenter_password"
     port: 443
     verify_ssl: false
-  # Node ESXi Standalone (opsional)
+  # Standalone ESXi Node (optional)
   - name: "esxi-standalone"
     host: "192.168.1.50"
     user: "root"
@@ -236,8 +237,8 @@ vmware_hosts:
     port: 443
     verify_ssl: false
 
-# 6. Manual Overrides (Opsional)
-# Untuk VM terisolasi/tanpa akses SSH yang domainnya ingin tetap tercatat
+# 6. Manual Overrides (Optional)
+# For isolated VMs without SSH access where domain mappings should be tracked manually
 manual_overrides:
   - domain: "internal-service.local"
     source_type: "nginx"
@@ -246,60 +247,62 @@ manual_overrides:
 
 ---
 
-## 🚦 Alur Penggunaan
+## 🚦 Usage Workflow
 
-### Langkah 1: Onboarding Proxmox Nodes (Hanya Dijalankan Sekali)
-Script ini melakukan SSH sekali ke setiap host Proxmox untuk membuat user khusus `inventory@pve` dengan izin audit read-only (`PVEAuditor`) dan menghasilkan API token:
+### Step 1: Onboard Proxmox Nodes (Run Once)
+Connects via SSH once to each Proxmox host to create the dedicated read-only user `inventory@pve` (`PVEAuditor` & `AgentMonitor` roles) and generates API tokens:
 ```bash
 python onboard_proxmox_nodes.py
 ```
 > [!NOTE]
-> Hasil token disimpan secara aman di `credentials.yaml`. Setelah langkah ini selesai, **koneksi rutin ke Proxmox tidak lagi menggunakan SSH**, melainkan langsung menggunakan Proxmox REST API token.
+> Tokens are securely saved into `credentials.yaml`. After this initial step, **subsequent scans do not require SSH to the Proxmox hypervisors**, communicating solely through the Proxmox REST API.
 
-### Langkah 2: Jalankan Pipeline Koleksi Data
-Anda dapat menjalankan seluruh pipeline secara otomatis dengan satu perintah:
+### Step 2: Run the Data Collection Pipeline
+Execute the complete inventory pipeline with a single command:
 
 ```bash
-# Menjalankan seluruh langkah koleksi
+# Run all collection steps
 python run_all.py
 
-# Opsi Cepat: Lewati scan SSH ke guest VM (hanya sinkronisasi Proxmox, VMware, Safeline, NPM)
+# Fast Mode: Skip guest VM SSH scans (syncs Proxmox, VMware, Safeline, NPM)
 python run_all.py --skip-ssh
 
-# Opsi Auto-Serve: Otomatis menjalankan Web UI setelah sinkronisasi selesai
+# Auto-Serve Mode: Launch Web UI automatically after sync completes
 python run_all.py --serve
 ```
 
-**Atau gunakan shortcut sesuai OS:**
+**Or use platform-specific runners:**
 - **Windows (CMD)**: `run_all.bat`
 - **Windows (PowerShell)**: `.\run_all.ps1`
 - **Linux / macOS**: `./run_all.sh`
 
-### Langkah 3: Jalankan Web Dashboard
+### Step 3: Launch Web Dashboard
 ```bash
 python app.py
 ```
-Buka browser dan akses:  
-👉 **`http://localhost:5000`** (atau `http://IP-SERVER:5000`)
+Open your browser and navigate to:  
+👉 **`http://localhost:5000`** (or `http://YOUR-SERVER-IP:5000`)
+
+From the dashboard, you can search for domains, filter by proxy type, and click the **Rescan** button anytime to refresh data.
 
 ---
 
-## ⏰ Otomasi & Penjadwalan (Cron / Task Scheduler)
+## ⏰ Automation & Scheduling (Cron / Task Scheduler)
 
-Agar data inventaris selalu mutakhir, jadwalkan script runner secara berkala:
+To keep inventory data updated continuously, schedule the runner periodically:
 
-### Menggunakan Crontab (Linux)
+### Using Crontab (Linux)
 ```bash
 chmod +x /opt/domain-radar/run_all.sh
 crontab -e
 ```
-Tambahkan baris berikut untuk sinkronisasi setiap jam:
+Add the following line to synchronize every hour:
 ```cron
 0 * * * * cd /opt/domain-radar && ./run_all.sh >> /var/log/domain-radar-sync.log 2>&1
 ```
 
-### Menjalankan Web UI sebagai Systemd Service (Linux)
-Buat file service di `/etc/systemd/system/domain-radar.service`:
+### Running Web UI as a Systemd Service (Linux)
+Create `/etc/systemd/system/domain-radar.service`:
 ```ini
 [Unit]
 Description=Domain Radar Web Dashboard
@@ -316,7 +319,7 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 ```
-Aktifkan dan jalankan:
+Enable and start the service:
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now domain-radar
@@ -324,38 +327,38 @@ sudo systemctl enable --now domain-radar
 
 ---
 
-## 🔒 Panduan Keamanan (PENTING Sebelum Push ke GitHub)
+## 🔒 Security Guidelines
 
-Sebelum Anda mempublikasikan repositori ini ke GitHub Publik/Privat, **pastikan tidak ada kredensial atau basis data internal yang ter-commit**:
+Before publishing this repository to public or private Git remotes, ensure no credentials or internal databases are committed:
 
-1. **Pastikan file berikut masuk ke `.gitignore`**:
-   - `config.yaml` *(berisi IP internal dan password)*
-   - `credentials.yaml` *(berisi API token Proxmox)*
-   - `inventory.db` *(berisi data seluruh VM, IP, dan domain internal)*
+1. **Verify `.gitignore` includes**:
+   - `config.yaml` *(contains internal IPs and passwords)*
+   - `credentials.yaml` *(contains Proxmox API tokens)*
+   - `inventory.db` *(contains internal VM, IP, and domain topologies)*
    - `scan.log`
-2. **Jika file tersebut terlanjur ter-commit secara lokal**, hapus dari staging git sebelum melakukan `git push`:
+2. **If files were accidentally tracked locally**, untrack them before pushing:
    ```bash
    git rm --cached config.yaml credentials.yaml inventory.db
    git commit -m "chore: remove sensitive configuration and local database from git tracking"
    ```
-3. **Prinsip Least Privilege**:
-   - User Proxmox menggunakan role **`PVEAuditor`** (read-only, tidak dapat memodifikasi atau menghapus VM).
-   - User VMware sebaiknya menggunakan akun **Read-Only** vSphere.
+3. **Principle of Least Privilege**:
+   - Proxmox user uses the read-only **`PVEAuditor`** role (cannot create, alter, or delete VMs).
+   - VMware accounts should be granted **Read-Only** vSphere permissions.
 
 ---
 
-## 🔌 Dokumentasi REST API
+## 🔌 REST API Documentation
 
-Domain Radar menyediakan endpoint REST API sederhana untuk integrasi otomatisasi:
+Domain Radar provides REST API endpoints for automation and integration:
 
-### 1. Pencarian Domain
+### 1. Domain Search
 - **Endpoint**: `GET /api/search?domain=<query>`
-- **Contoh Request**: `GET /api/search?domain=api.contoh.com`
-- **Contoh Response**:
+- **Example Request**: `GET /api/search?domain=api.example.com`
+- **Example Response**:
   ```json
   [
     {
-      "domain": "api.contoh.com",
+      "domain": "api.example.com",
       "source_type": "safeline",
       "is_proxy": true,
       "proxy_type": "safeline",
@@ -385,9 +388,9 @@ Domain Radar menyediakan endpoint REST API sederhana untuk integrasi otomatisasi
   ]
   ```
 
-### 2. Statistik Inventaris
+### 2. Inventory Statistics
 - **Endpoint**: `GET /api/stats`
-- **Contoh Response**:
+- **Example Response**:
   ```json
   {
     "total_vms": 128,
@@ -400,27 +403,55 @@ Domain Radar menyediakan endpoint REST API sederhana untuk integrasi otomatisasi
   }
   ```
 
+### 3. Trigger Rescan
+- **Endpoint**: `POST /api/rescan` (or `GET /api/rescan`)
+- **Body (JSON)**: `{"skip_ssh": false}` (optional)
+- **Example Response**:
+  ```json
+  {
+    "status": "started",
+    "message": "Rescan initiated.",
+    "skip_ssh": false
+  }
+  ```
+
+### 4. Rescan Status
+- **Endpoint**: `GET /api/rescan/status`
+- **Example Response**:
+  ```json
+  {
+    "is_running": true,
+    "status": "running",
+    "current_step": "Collect Proxmox VM/LXC & IP Data (Local & Public)",
+    "step_index": 3,
+    "total_steps": 7,
+    "duration": 4.2,
+    "error": null,
+    "skip_ssh": false
+  }
+  ```
+
 ---
 
-## 🛠️ Catatan Teknis & Batasan
+## 🛠️ Technical Notes & Considerations
 
-- **Deteksi IP QEMU VM**: Memerlukan `qemu-guest-agent` terpasang dan aktif di dalam VM guest agar IP dapat dilaporkan ke Proxmox VE.
-- **Deteksi IP Container LXC**: Menggunakan Proxmox API `/interfaces` (PVE ≥ 7.3) dengan fallback parsing konfigurasi antarmuka `net0`.
-- **Deteksi IP VMware**: Memerlukan VMware Tools terpasang pada guest OS agar properti `guest.ipAddress` dan `guest.net` terisi lengkap.
-- **Safeline WAF**: Telah diuji pada versi Open API Safeline Community/Enterprise ≥ 6.6.0.
-- **Nginx Proxy Manager**: Menggunakan endpoint standard `/api/nginx/proxy-hosts`.
-
----
-
-## 🤝 Kontribusi
-
-Kontribusi selalu terbuka! Silakan kirimkan Pull Request atau buat Issue untuk:
-- Menambahkan collector hypervisor baru (misal: OpenStack, Harvester, Nutanix AHV).
-- Menambahkan collector reverse proxy baru (misal: Traefik, Caddy, Kong, Cloudflare Tunnels).
-- Peningkatan tampilan dashboard atau optimasi kueri database.
+- **QEMU VM IP Detection**: Requires `qemu-guest-agent` installed and running inside guest VMs for network reporting to Proxmox VE.
+- **LXC Container IP Detection**: Utilizes Proxmox API `/interfaces` (PVE ≥ 7.3) with fallback to `net0` interface configuration parsing.
+- **VMware IP Detection**: Requires VMware Tools installed on guest OS for `guest.ipAddress` and `guest.net` property population.
+- **Safeline WAF**: Verified with Safeline Community/Enterprise Open API ≥ 6.6.0.
+- **Nginx Proxy Manager**: Uses standard `/api/nginx/proxy-hosts` endpoint.
 
 ---
 
-## 📄 Lisensi
+## 🤝 Contributing
 
-Proyek ini dilisensikan di bawah [MIT License](LICENSE).
+Contributions are welcome! Please open an Issue or submit a Pull Request to:
+- Add collectors for additional hypervisors (e.g., OpenStack, Harvester, Nutanix AHV).
+- Add collectors for other reverse proxies (e.g., Traefik, Caddy, Kong, Cloudflare Tunnels).
+- Improve dashboard visualization or query performance.
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).

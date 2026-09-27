@@ -1,13 +1,11 @@
 """
-Kumpulkan daftar VM/LXC + IP lokal dari semua host Proxmox yang didaftarkan di config.yaml.
-Jalankan berkala (cron), aman dijalankan berulang kali (upsert berdasarkan proxmox_host+vmid).
+Collect VM/LXC list + local and public IPs from all Proxmox hosts listed in config.yaml.
+Safe to run repeatedly (upsert based on proxmox_host + vmid).
 """
 import sqlite3
 import yaml
-from proxmoxer import ProxmoxAPI
-
-
 import ipaddress
+from proxmoxer import ProxmoxAPI
 
 IGNORE_IFACE_PREFIXES = ("lo", "docker", "safeline", "veth", "br-", "kube", "dummy", "virbr", "flannel")
 
@@ -15,7 +13,7 @@ IGNORE_IFACE_PREFIXES = ("lo", "docker", "safeline", "veth", "br-", "kube", "dum
 def extract_ip_pair(ip_candidates):
     """
     ip_candidates: list of (iface_name, ip_str)
-    Returns: (local_ip, public_ip)
+    Returns: (local_ip, public_ip, all_ips_str)
     """
     local_ips = []
     public_ips = []
@@ -42,7 +40,7 @@ def extract_ip_pair(ip_candidates):
     all_ips = list(dict.fromkeys(local_ips + public_ips))
     all_ips_str = ",".join(all_ips) if all_ips else None
 
-    # Untuk local_ip: prioritaskan subnet LAN/management 192.168.x.x bila ada
+    # For local_ip: prioritize 192.168.x.x LAN/management subnet if present
     local_ip = None
     for ip in local_ips:
         if ip.startswith("192.168."):
@@ -56,7 +54,7 @@ def extract_ip_pair(ip_candidates):
 
 
 def get_ips_qemu(prox, node, vmid):
-    """Ambil IP (lokal & publik) dari QEMU guest agent."""
+    """Fetch IP (local & public) from QEMU guest agent."""
     candidates = []
     try:
         res = prox.nodes(node).qemu(vmid).agent("network-get-interfaces").get()
@@ -71,7 +69,7 @@ def get_ips_qemu(prox, node, vmid):
 
 
 def get_ips_lxc(prox, node, vmid):
-    """Ambil IP (lokal & publik) LXC lewat endpoint interfaces & parsing config netX."""
+    """Fetch IP (local & public) of LXC via interfaces endpoint & parsing netX config."""
     candidates = []
     try:
         res = prox.nodes(node).lxc(vmid).interfaces.get()
@@ -105,18 +103,18 @@ def get_ips_lxc(prox, node, vmid):
 
 
 def collect(config, db_path, credentials):
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, timeout=30.0)
     cur = conn.cursor()
 
     for host_cfg in config["proxmox_hosts"]:
         name = host_cfg["name"]
         cred = credentials.get(name)
         if not cred:
-            print(f"[proxmox] Lewati {name}: belum punya token. "
-                  f"Jalankan onboard_proxmox_nodes.py dulu.")
+            print(f"[proxmox] Skipping {name}: no token found. "
+                  f"Run onboard_proxmox_nodes.py first.")
             continue
 
-        print(f"[proxmox] Menghubungi {name} ({host_cfg['api_host']}) ...")
+        print(f"[proxmox] Connecting to {name} ({host_cfg['api_host']}) ...")
         try:
             prox = ProxmoxAPI(
                 host_cfg["api_host"],
@@ -127,7 +125,7 @@ def collect(config, db_path, credentials):
             )
             nodes = prox.nodes.get()
         except Exception as e:
-            print(f"  GAGAL konek ke {name}: {e}")
+            print(f"  FAILED connecting to {name}: {e}")
             continue
 
         known_hosts = {h["name"] for h in config["proxmox_hosts"]}
@@ -169,11 +167,11 @@ def collect(config, db_path, credentials):
                         (host_cfg["name"], node_name, ct["vmid"], ct.get("name"), local_ip, public_ip, all_ips, ct.get("status")),
                     )
             except Exception as e:
-                print(f"  GAGAL ambil VM dari node {node_name} di {name}: {e}")
+                print(f"  FAILED retrieving VMs from node {node_name} on {name}: {e}")
 
         conn.commit()
     conn.close()
-    print("[proxmox] Selesai.")
+    print("[proxmox] Completed.")
 
 
 if __name__ == "__main__":
@@ -184,5 +182,5 @@ if __name__ == "__main__":
             creds = yaml.safe_load(f) or {}
     except FileNotFoundError:
         creds = {}
-        print("[proxmox] credentials.yaml belum ada. Jalankan onboard_proxmox_nodes.py dulu.")
+        print("[proxmox] credentials.yaml does not exist. Run onboard_proxmox_nodes.py first.")
     collect(cfg, cfg["database_path"], creds)

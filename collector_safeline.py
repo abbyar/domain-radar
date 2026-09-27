@@ -1,21 +1,13 @@
 """
-Ambil daftar site (domain + backend upstream) dari tiap instance Safeline lewat Open API-nya.
-Butuh Safeline versi >= 6.6.0 dan API Token yang dibuat di menu System Management Safeline.
-
-CATATAN PENTING:
-SafeLine mendokumentasikan endpoint tambah site: POST /api/open/site.
-Endpoint untuk MEMBACA/LIST site kemungkinan besar mengikuti pola REST yang sama
-(GET /api/open/site), tapi belum ada dokumentasi publik resmi untuk response-nya.
-Cek Swagger/OpenAPI bawaan Safeline-mu (biasanya bisa diakses dari admin panel,
-atau tanyakan ke komunitas Discord Safeline) lalu sesuaikan `parse_response()` di bawah
-jika struktur JSON-nya berbeda dari asumsi di sini.
+Collect site list (domains + backend upstream) from each Safeline instance via its Open API.
+Requires Safeline version >= 6.6.0 and an API Token generated from Safeline's System Management menu.
 """
 import sqlite3
 import yaml
 import requests
 from urllib.parse import urlparse
 
-requests.packages.urllib3.disable_warnings()  # karena sertifikat Safeline biasanya self-signed
+requests.packages.urllib3.disable_warnings()  # Safeline certificates are typically self-signed
 
 
 def fetch_sites(safeline_cfg):
@@ -39,7 +31,7 @@ def fetch_sites(safeline_cfg):
 
 
 def parse_upstream(upstream_url):
-    """upstream biasanya berbentuk 'http://10.0.1.5:8080' -> pecah jadi ip, port."""
+    """Upstream is usually formatted as 'http://10.0.1.5:8080' -> parse into ip, port."""
     try:
         parsed = urlparse(upstream_url)
         return parsed.hostname, str(parsed.port or (443 if parsed.scheme == "https" else 80))
@@ -48,18 +40,18 @@ def parse_upstream(upstream_url):
 
 
 def collect(config, db_path):
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, timeout=30.0)
     cur = conn.cursor()
 
     for sl in config.get("safeline_hosts", []) or []:
-        print(f"[safeline] Menghubungi {sl['api_base']} ...")
+        print(f"[safeline] Connecting to {sl['api_base']} ...")
         try:
             sites = fetch_sites(sl)
         except Exception as e:
-            print(f"  GAGAL ambil data dari {sl['api_base']}: {e}")
+            print(f"  FAILED to retrieve data from {sl['api_base']}: {e}")
             continue
 
-        # Bersihkan hasil scan lama HANYA untuk host ini agar data host yang sedang offline tidak hilang
+        # Clear old records ONLY for this host so offline host records are not lost
         cur.execute("DELETE FROM domain_map WHERE source_type = 'safeline' AND found_on_ip = ?", (sl["local_ip"],))
 
         count = 0
@@ -79,11 +71,11 @@ def collect(config, db_path):
                     (domain.lower(), sl["local_ip"], up_ip, up_port),
                 )
                 count += 1
-        print(f"  {count} domain ditemukan di Safeline {sl['local_ip']}")
+        print(f"  {count} domains found on Safeline {sl['local_ip']}")
 
     conn.commit()
     conn.close()
-    print("[safeline] Selesai.")
+    print("[safeline] Completed.")
 
 
 if __name__ == "__main__":

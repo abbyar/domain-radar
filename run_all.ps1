@@ -1,4 +1,4 @@
-# PowerShell script untuk menjalankan run_all.py
+# PowerShell script to execute run_all.py
 param (
     [switch]$SkipSsh,
     [switch]$Serve
