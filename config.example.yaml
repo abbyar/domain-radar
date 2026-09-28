@@ -2,6 +2,14 @@
 
 database_path: "inventory.db"
 
+# Autentikasi Login Web UI (Domain Radar)
+auth:
+  enabled: true
+  username: "admin"
+  password: "adminpassword"   # Ganti dengan password yang Anda inginkan (plain text atau hash Werkzeug)
+  session_secret: "domain-radar-secret-change-me" # Kunci rahasia sesi cookie Flask
+  session_lifetime_days: 7    # Masa aktif login (hari)
+
 # Semua 30+ host Proxmox kamu (standalone atau cluster, tetap didaftar satu-satu per host/cluster).
 # CUKUP isi info SSH di sini -- token API akan dibuat OTOMATIS oleh onboard_proxmox_nodes.py
 # dan disimpan terpisah di credentials.yaml (jangan taruh secret di file ini).

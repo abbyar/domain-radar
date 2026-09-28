@@ -8,11 +8,15 @@ import os
 import re
 import sys
 import time
+import secrets
+from datetime import timedelta
+from urllib.parse import urlparse, urljoin
 import yaml
 import sqlite3
 import threading
 import subprocess
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
+from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -20,6 +24,135 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 with open("config.yaml") as f:
     CONFIG = yaml.safe_load(f)
 DB_PATH = CONFIG["database_path"]
+
+
+def get_conn():
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+# Authentication Configuration
+AUTH_CONFIG = CONFIG.get("auth", {})
+if "DOMAIN_RADAR_AUTH_ENABLED" in os.environ:
+    AUTH_ENABLED = os.environ.get("DOMAIN_RADAR_AUTH_ENABLED", "").lower() in ("1", "true", "yes")
+else:
+    AUTH_ENABLED = bool(AUTH_CONFIG.get("enabled", True))
+
+AUTH_USERNAME = os.environ.get("DOMAIN_RADAR_AUTH_USER") or str(AUTH_CONFIG.get("username", "admin"))
+AUTH_PASSWORD = os.environ.get("DOMAIN_RADAR_AUTH_PASS") or str(AUTH_CONFIG.get("password", "adminpassword"))
+SESSION_LIFETIME_DAYS = int(AUTH_CONFIG.get("session_lifetime_days", 7))
+
+# Persistent Session Secret Key
+session_secret = os.environ.get("DOMAIN_RADAR_SECRET_KEY") or AUTH_CONFIG.get("session_secret")
+if not session_secret or session_secret == "domain-radar-secret-change-me":
+    secret_file = ".session_secret"
+    if os.path.exists(secret_file):
+        try:
+            with open(secret_file, "r") as sf:
+                session_secret = sf.read().strip()
+        except Exception:
+            session_secret = None
+    if not session_secret:
+        session_secret = secrets.token_hex(32)
+        try:
+            with open(secret_file, "w") as sf:
+                sf.write(session_secret)
+        except Exception:
+            pass
+
+app.secret_key = session_secret
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.permanent_session_lifetime = timedelta(days=SESSION_LIFETIME_DAYS)
+
+
+def init_auth_db():
+    """Ensure auth_users table exists and has a default user."""
+    try:
+        conn = get_conn()
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS auth_users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+        row = conn.execute("SELECT COUNT(*) FROM auth_users").fetchone()
+        if row and row[0] == 0:
+            pwd_hash = AUTH_PASSWORD if AUTH_PASSWORD.startswith(("scrypt:", "pbkdf2:", "argon2:")) else generate_password_hash(AUTH_PASSWORD)
+            conn.execute("INSERT INTO auth_users (username, password_hash) VALUES (?, ?)", (AUTH_USERNAME, pwd_hash))
+            conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[WARN] Failed to initialize auth_users table: {e}")
+
+init_auth_db()
+
+
+def verify_credentials(user_input, pass_input):
+    """Safely verify username and password against database auth_users.
+    Falls back to config.yaml if user not yet in database."""
+    if not user_input or not pass_input:
+        return False
+    user_input = str(user_input).strip()
+    try:
+        conn = get_conn()
+        row = conn.execute("SELECT password_hash FROM auth_users WHERE username = ?", (user_input,)).fetchone()
+        conn.close()
+        if row:
+            stored_hash = row["password_hash"]
+            if stored_hash.startswith(("scrypt:", "pbkdf2:", "argon2:")):
+                return check_password_hash(stored_hash, pass_input)
+            return secrets.compare_digest(pass_input, stored_hash)
+    except Exception:
+        pass
+
+    # Fallback to config.yaml / environment variables
+    if not secrets.compare_digest(user_input, AUTH_USERNAME.strip()):
+        return False
+    stored_pw = AUTH_PASSWORD.strip()
+    if stored_pw.startswith(("scrypt:", "pbkdf2:", "argon2:")):
+        try:
+            return check_password_hash(stored_pw, pass_input)
+        except Exception:
+            return False
+    return secrets.compare_digest(pass_input, stored_pw)
+
+
+def is_safe_url(target):
+    """Check if the redirect URL belongs to the same host to prevent open redirect."""
+    if not target:
+        return False
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return test_url.scheme in ("http", "https") and ref_url.netloc == test_url.netloc
+
+
+@app.before_request
+def enforce_authentication():
+    """Protect all dashboard routes and APIs if authentication is enabled."""
+    if not AUTH_ENABLED:
+        return None
+
+    if request.endpoint in ("login", "logout", "static"):
+        return None
+
+    if session.get("authenticated"):
+        return None
+
+    # Unauthenticated API calls return JSON 401
+    if request.path.startswith("/api/"):
+        return jsonify({
+            "status": "error",
+            "message": "Authentication required. Please log in.",
+            "login_url": "/login"
+        }), 401
+
+    # Unauthenticated Web page calls redirect to /login
+    target_next = request.full_path if request.query_string else request.path
+    return redirect(url_for("login", next=target_next))
 
 # Thread-safe rescan state tracking
 rescan_lock = threading.Lock()
@@ -34,12 +167,6 @@ rescan_state = {
     "error": None,
     "skip_ssh": False,
 }
-
-
-def get_conn():
-    conn = sqlite3.connect(DB_PATH, timeout=30.0)
-    conn.row_factory = sqlite3.Row
-    return conn
 
 
 def resolve_vm(conn, ip, prefer_host=None):
@@ -231,9 +358,104 @@ def _run_rescan_worker(skip_ssh=False):
             rescan_state["duration"] = duration
 
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if not AUTH_ENABLED:
+        return redirect(url_for("index"))
+
+    next_url = request.args.get("next") or request.form.get("next") or ""
+    if not is_safe_url(next_url):
+        next_url = url_for("index")
+
+    if session.get("authenticated"):
+        return redirect(next_url)
+
+    error = None
+    username_val = ""
+
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+        username = (request.form.get("username") or data.get("username", "")).strip()
+        password = request.form.get("password") or data.get("password", "")
+        remember = bool(request.form.get("remember") or data.get("remember", False))
+        username_val = username
+
+        if verify_credentials(username, password):
+            session.clear()
+            session["authenticated"] = True
+            session["user"] = username
+            session.permanent = remember
+            if request.is_json:
+                return jsonify({"status": "success", "redirect": next_url})
+            return redirect(next_url)
+        else:
+            time.sleep(0.5)  # mitigate brute-force
+            error = "Username atau password salah. Silakan coba lagi."
+            if request.is_json:
+                return jsonify({"status": "error", "message": error}), 401
+
+    return render_template("login.html", error=error, username=username_val, next_url=next_url)
+
+
+@app.route("/logout", methods=["GET", "POST"])
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
+@app.route("/api/auth/change-password", methods=["POST"])
+def api_change_password():
+    if not AUTH_ENABLED:
+        return jsonify({"status": "error", "message": "Autentikasi dinonaktifkan."}), 400
+
+    current_user = session.get("user")
+    if not current_user:
+        return jsonify({"status": "error", "message": "Unauthorized. Silakan login kembali."}), 401
+
+    data = request.get_json(silent=True) or request.form or {}
+    current_password = data.get("current_password", "")
+    new_password = data.get("new_password", "")
+    confirm_password = data.get("confirm_password", "")
+
+    if not current_password or not new_password:
+        return jsonify({"status": "error", "message": "Password lama dan password baru wajib diisi."}), 400
+
+    if new_password != confirm_password:
+        return jsonify({"status": "error", "message": "Konfirmasi password baru tidak cocok."}), 400
+
+    if len(new_password) < 4:
+        return jsonify({"status": "error", "message": "Password baru minimal 4 karakter."}), 400
+
+    if not verify_credentials(current_user, current_password):
+        return jsonify({"status": "error", "message": "Password lama tidak sesuai."}), 400
+
+    new_hash = generate_password_hash(new_password)
+    try:
+        conn = get_conn()
+        updated = conn.execute(
+            "UPDATE auth_users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE username = ?",
+            (new_hash, current_user),
+        ).rowcount
+        if updated == 0:
+            conn.execute(
+                "INSERT INTO auth_users (username, password_hash) VALUES (?, ?)",
+                (current_user, new_hash),
+            )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Gagal menyimpan ke database: {e}"}), 500
+
+    return jsonify({"status": "success", "message": "Password berhasil diperbarui di database!"})
+
+
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template(
+        "index.html",
+        auth_enabled=AUTH_ENABLED,
+        current_user=session.get("user", "admin")
+    )
 
 
 @app.route("/api/search")

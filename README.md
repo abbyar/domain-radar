@@ -283,7 +283,30 @@ python app.py
 Open your browser and navigate to:  
 👉 **`http://localhost:5000`** (or `http://YOUR-SERVER-IP:5000`)
 
-From the dashboard, you can search for domains, filter by proxy type, and click the **Rescan** button anytime to refresh data.
+### 🔐 Web UI Authentication & Dynamic Password Management
+By default, access to the Web UI dashboard and REST API is protected with password authentication:
+- **Default Username**: `admin`
+- **Default Password**: `adminpassword`
+
+Credentials and password hashes are stored dynamically in the SQLite database (`inventory.db` in table `auth_users`).
+
+**Settings Gear Button (⚙️)**:
+On the dashboard header, click the gear icon button next to the theme toggle:
+- 🔑 **Change password**: Open a popup dialog to change your password dynamically on-the-fly without restarting the service or editing configuration files.
+- 🚪 **Logout**: Immediately terminate your active session and redirect to the login page.
+
+You can also seed or customize initial credentials in `config.yaml`:
+```yaml
+auth:
+  enabled: true
+  username: "admin"
+  password: "YOUR_STRONG_PASSWORD"   # Seed credentials for initial setup
+  session_secret: "YOUR_SECRET_KEY"  # Flask session secret key
+  session_lifetime_days: 7           # Session validity period
+```
+
+> **Tip**: You can also override credentials via environment variables:  
+> `DOMAIN_RADAR_AUTH_USER="admin" DOMAIN_RADAR_AUTH_PASS="your_password" python app.py`
 
 ---
 

@@ -800,6 +800,305 @@
     height: 100%;
   }
 
+  /* Settings Dropdown Button & Menu */
+  .settings-dropdown-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+  .settings-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s ease-in-out;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    font-family: inherit;
+    user-select: none;
+    height: 33px;
+  }
+  .settings-btn:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #94a3b8;
+  }
+  .settings-btn:active, .settings-btn.active {
+    background: #e2e8f0;
+    border-color: #64748b;
+  }
+  .gear-icon {
+    display: block;
+    flex-shrink: 0;
+    color: #475569;
+    transition: transform .25s ease;
+  }
+  .settings-btn:hover .gear-icon, .settings-btn.active .gear-icon {
+    transform: rotate(45deg);
+    color: #1e293b;
+  }
+  .user-label {
+    font-weight: 600;
+  }
+  .dropdown-chevron {
+    color: #64748b;
+    transition: transform .15s ease;
+  }
+  .settings-btn.active .dropdown-chevron {
+    transform: rotate(180deg);
+  }
+
+  .settings-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    min-width: 195px;
+    padding: 6px;
+    z-index: 100;
+  }
+  .settings-menu.open {
+    display: block;
+    animation: dropdown-fade .12s ease-out;
+  }
+  @keyframes dropdown-fade {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .menu-header {
+    padding: 6px 10px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .menu-user-title {
+    font-size: 0.7rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-weight: 600;
+  }
+  .menu-user-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .menu-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 4px 0;
+  }
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 10px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #334155;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all .15s ease;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+  .menu-item svg {
+    flex-shrink: 0;
+    color: #64748b;
+  }
+  .menu-item:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+  .menu-item:hover svg {
+    color: #0f172a;
+  }
+  .menu-item-logout {
+    color: #dc2626;
+  }
+  .menu-item-logout svg {
+    color: #dc2626;
+  }
+  .menu-item-logout:hover {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+  .menu-item-logout:hover svg {
+    color: #b91c1c;
+  }
+
+  /* Change Password Modal */
+  .pwd-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+  }
+  .pwd-modal-overlay.open {
+    display: flex;
+    animation: modal-fade .15s ease-out;
+  }
+  @keyframes modal-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .pwd-modal-card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 390px;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2), 0 8px 10px -6px rgba(0,0,0,0.1);
+    overflow: hidden;
+    animation: modal-pop .2s ease-out;
+  }
+  @keyframes modal-pop {
+    from { opacity: 0; transform: scale(0.96) translateY(-6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .pwd-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .pwd-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .pwd-modal-title h3 {
+    margin: 0;
+    font-size: 0.95rem;
+  }
+  .modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: #64748b;
+    cursor: pointer;
+    padding: 0 4px;
+    border-radius: 4px;
+    transition: color .15s ease;
+  }
+  .modal-close-btn:hover {
+    color: #0f172a;
+  }
+  .modal-field {
+    padding: 0 18px;
+    margin-top: 12px;
+  }
+  .modal-field label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 4px;
+  }
+  .modal-field input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 0.88rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+    outline: none;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+  .modal-field input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+  .modal-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 16px 18px 18px;
+    margin-top: 16px;
+    border-top: 1px solid #f1f5f9;
+  }
+  .modal-btn-cancel {
+    padding: 6px 13px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #475569;
+    font-family: inherit;
+    transition: all .15s ease;
+  }
+  .modal-btn-cancel:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+  .modal-btn-save {
+    padding: 6px 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid #1d4ed8;
+    background: #2563eb;
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+    transition: all .15s ease;
+  }
+  .modal-btn-save:hover {
+    background: #1d4ed8;
+  }
+  .modal-btn-save:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  .modal-alert {
+    margin: 12px 18px 0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .modal-alert.error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+  }
+  .modal-alert.success {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+  }
+
   /* Dark Theme Overrides */
   [data-theme="dark"] body {
     background: #090d16;
@@ -880,6 +1179,122 @@
     background: #283548;
     color: #f8fafc;
     border-color: #475569;
+  }
+  [data-theme="dark"] .settings-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+  [data-theme="dark"] .settings-btn:hover {
+    background: #283548;
+    color: #f8fafc;
+    border-color: #475569;
+  }
+  [data-theme="dark"] .settings-btn:hover .gear-icon,
+  [data-theme="dark"] .settings-btn.active .gear-icon {
+    color: #38bdf8;
+  }
+  [data-theme="dark"] .settings-btn.active {
+    background: #334155;
+    border-color: #64748b;
+  }
+  [data-theme="dark"] .settings-menu {
+    background: #111827;
+    border-color: #1f2937;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+  }
+  [data-theme="dark"] .menu-header {
+    border-bottom-color: #1f2937;
+  }
+  [data-theme="dark"] .menu-user-title {
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .menu-user-name {
+    color: #f8fafc;
+  }
+  [data-theme="dark"] .menu-divider {
+    background: #1f2937;
+  }
+  [data-theme="dark"] .menu-item {
+    color: #cbd5e1;
+  }
+  [data-theme="dark"] .menu-item svg {
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .menu-item:hover {
+    background: #1e293b;
+    color: #f8fafc;
+  }
+  [data-theme="dark"] .menu-item:hover svg {
+    color: #f8fafc;
+  }
+  [data-theme="dark"] .menu-item-logout {
+    color: #fca5a5;
+  }
+  [data-theme="dark"] .menu-item-logout svg {
+    color: #fca5a5;
+  }
+  [data-theme="dark"] .menu-item-logout:hover {
+    background: rgba(220, 38, 38, 0.2);
+    color: #fecaca;
+  }
+  [data-theme="dark"] .menu-item-logout:hover svg {
+    color: #fecaca;
+  }
+
+  [data-theme="dark"] .pwd-modal-card {
+    background: #111827;
+    border-color: #1f2937;
+    color: #f8fafc;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  }
+  [data-theme="dark"] .pwd-modal-header {
+    border-bottom-color: #1f2937;
+  }
+  [data-theme="dark"] .pwd-modal-title {
+    color: #f8fafc;
+  }
+  [data-theme="dark"] .modal-close-btn {
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .modal-close-btn:hover {
+    color: #f8fafc;
+  }
+  [data-theme="dark"] .modal-field label {
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .modal-field input {
+    background: #161f30;
+    border-color: #334155;
+    color: #f8fafc;
+  }
+  [data-theme="dark"] .modal-field input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  }
+  [data-theme="dark"] .modal-actions {
+    border-top-color: #1f2937;
+  }
+  [data-theme="dark"] .modal-btn-cancel {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+  }
+  [data-theme="dark"] .modal-btn-cancel:hover {
+    background: #283548;
+    color: #f8fafc;
+    border-color: #475569;
+  }
+  [data-theme="dark"] .modal-alert.error {
+    background: rgba(153, 27, 27, 0.25);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+  }
+  [data-theme="dark"] .modal-alert.success {
+    background: rgba(6, 95, 70, 0.25);
+    border-color: rgba(16, 185, 129, 0.35);
+    color: #6ee7b7;
   }
   [data-theme="dark"] #rescan-banner {
     background: rgba(30, 64, 175, 0.2);
@@ -1229,6 +1644,44 @@
         <span id="theme-icon-container" class="theme-icon-wrapper"></span>
         <span id="theme-text">Dark</span>
       </button>
+
+      {% if auth_enabled %}
+      <!-- Settings Gear Dropdown -->
+      <div class="settings-dropdown-wrapper">
+        <button id="settings-btn" class="settings-btn" onclick="toggleSettingsDropdown(event)" aria-haspopup="true" aria-expanded="false" title="Pengaturan ({{ current_user }})">
+          <svg class="gear-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <span class="user-label">{{ current_user }}</span>
+          <svg class="dropdown-chevron" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <div id="settings-menu" class="settings-menu" role="menu">
+          <div class="menu-header">
+            <span class="menu-user-title">Login sebagai</span>
+            <span class="menu-user-name">{{ current_user }}</span>
+          </div>
+          <div class="menu-divider"></div>
+          <button type="button" class="menu-item" onclick="openChangePasswordModal()" role="menuitem">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <span>Change password</span>
+          </button>
+          <a href="/logout" class="menu-item menu-item-logout" role="menuitem">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            <span>Logout</span>
+          </a>
+        </div>
+      </div>
+      {% endif %}
     </div>
   </header>
 
@@ -1247,6 +1700,47 @@
     <div id="filter-pills" class="pills-container"></div>
   </div>
   <div id="results"></div>
+
+  {% if auth_enabled %}
+  <!-- Modal Change Password -->
+  <div id="pwd-modal-overlay" class="pwd-modal-overlay" onclick="handleModalOverlayClick(event)">
+    <div class="pwd-modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="pwd-modal-header">
+        <div class="pwd-modal-title">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <h3 id="modal-title">Change Password</h3>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeChangePasswordModal()" aria-label="Tutup modal">&times;</button>
+      </div>
+
+      <div id="pwd-modal-alert" class="modal-alert" style="display:none;"></div>
+
+      <form id="change-pwd-form" onsubmit="submitChangePassword(event)">
+        <div class="modal-field">
+          <label for="current_password">Password Lama</label>
+          <input type="password" id="current_password" required autocomplete="current-password" placeholder="••••••••">
+        </div>
+        <div class="modal-field">
+          <label for="new_password">Password Baru</label>
+          <input type="password" id="new_password" required autocomplete="new-password" placeholder="Minimal 4 karakter">
+        </div>
+        <div class="modal-field">
+          <label for="confirm_password">Konfirmasi Password Baru</label>
+          <input type="password" id="confirm_password" required autocomplete="new-password" placeholder="Ulangi password baru">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="modal-btn-cancel" onclick="closeChangePasswordModal()">Batal</button>
+          <button type="submit" id="btn-save-pwd" class="modal-btn-save">
+            <span>Simpan Perubahan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
 
 <script>
 const input = document.getElementById('q');
@@ -1571,11 +2065,23 @@ function filterAndRender() {
   render(finalFiltered);
 }
 
+function handleAuthRedirect(res) {
+  if (res && res.status === 401) {
+    window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+    return true;
+  }
+  return false;
+}
+
 function loadDomains() {
   countEl.innerHTML = 'Loading domains...';
   fetch('/api/search')
-    .then(r => r.json())
+    .then(r => {
+      if (handleAuthRedirect(r)) return null;
+      return r.json();
+    })
     .then(data => {
+      if (!data) return;
       allData = data;
       filterAndRender();
     })
@@ -1597,6 +2103,7 @@ function startRescan() {
     body: JSON.stringify({ skip_ssh: skipSsh })
   })
     .then(async r => {
+      if (handleAuthRedirect(r)) return null;
       const contentType = r.headers.get("content-type") || "";
       if (!contentType.includes("application/json")) {
         throw new Error(`Server returned ${r.status} ${r.statusText}. The Flask server needs to be restarted.`);
@@ -1608,6 +2115,7 @@ function startRescan() {
       return data;
     })
     .then(data => {
+      if (!data) return;
       pollRescanStatus();
     })
     .catch(err => {
@@ -1622,6 +2130,10 @@ function pollRescanStatus() {
   rescanPollTimer = setInterval(() => {
     fetch('/api/rescan/status')
       .then(async r => {
+        if (handleAuthRedirect(r)) {
+          clearInterval(rescanPollTimer);
+          return null;
+        }
         const contentType = r.headers.get("content-type") || "";
         if (!contentType.includes("application/json")) {
           throw new Error(`Server returned ${r.status}`);
@@ -1629,6 +2141,7 @@ function pollRescanStatus() {
         return await r.json();
       })
       .then(state => {
+        if (!state) return;
         if (state.is_running) {
           rescanBtn.disabled = true;
           rescanBtn.classList.add('scanning');
@@ -1686,9 +2199,12 @@ function showRescanToast(msg, type) {
 // Check on initial page load if a rescan is already running
 function checkInitialRescanStatus() {
   fetch('/api/rescan/status')
-    .then(r => r.json())
+    .then(r => {
+      if (handleAuthRedirect(r)) return null;
+      return r.json();
+    })
     .then(state => {
-      if (state.is_running) {
+      if (state && state.is_running) {
         pollRescanStatus();
       }
     })
@@ -1747,6 +2263,137 @@ try {
 
 // Initialize theme UI
 updateThemeUI(getPreferredTheme());
+
+/* Settings Dropdown & Modal Logic */
+function toggleSettingsDropdown(e) {
+  if (e) e.stopPropagation();
+  const menu = document.getElementById('settings-menu');
+  const btn = document.getElementById('settings-btn');
+  if (!menu || !btn) return;
+  const isOpen = menu.classList.contains('open');
+  if (isOpen) {
+    menu.classList.remove('open');
+    btn.classList.remove('active');
+    btn.setAttribute('aria-expanded', 'false');
+  } else {
+    menu.classList.add('open');
+    btn.classList.add('active');
+    btn.setAttribute('aria-expanded', 'true');
+  }
+}
+
+function closeSettingsDropdown() {
+  const menu = document.getElementById('settings-menu');
+  const btn = document.getElementById('settings-btn');
+  if (menu) menu.classList.remove('open');
+  if (btn) {
+    btn.classList.remove('active');
+    btn.setAttribute('aria-expanded', 'false');
+  }
+}
+
+function openChangePasswordModal() {
+  closeSettingsDropdown();
+  const overlay = document.getElementById('pwd-modal-overlay');
+  const alertEl = document.getElementById('pwd-modal-alert');
+  const form = document.getElementById('change-pwd-form');
+  if (alertEl) {
+    alertEl.style.display = 'none';
+    alertEl.className = 'modal-alert';
+    alertEl.textContent = '';
+  }
+  if (form) form.reset();
+  if (overlay) {
+    overlay.classList.add('open');
+    setTimeout(() => {
+      const curInput = document.getElementById('current_password');
+      if (curInput) curInput.focus();
+    }, 100);
+  }
+}
+
+function closeChangePasswordModal() {
+  const overlay = document.getElementById('pwd-modal-overlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
+function handleModalOverlayClick(e) {
+  if (e.target && e.target.id === 'pwd-modal-overlay') {
+    closeChangePasswordModal();
+  }
+}
+
+function submitChangePassword(e) {
+  e.preventDefault();
+  const currentPassword = document.getElementById('current_password').value;
+  const newPassword = document.getElementById('new_password').value;
+  const confirmPassword = document.getElementById('confirm_password').value;
+  const saveBtn = document.getElementById('btn-save-pwd');
+
+  if (newPassword !== confirmPassword) {
+    showModalAlert('Konfirmasi password baru tidak cocok.', 'error');
+    return;
+  }
+  if (newPassword.length < 4) {
+    showModalAlert('Password baru minimal 4 karakter.', 'error');
+    return;
+  }
+
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Menyimpan...';
+
+  fetch('/api/auth/change-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+      confirm_password: confirmPassword
+    })
+  })
+    .then(async r => {
+      const data = await r.json();
+      if (!r.ok) {
+        throw new Error(data.message || `HTTP ${r.status}`);
+      }
+      return data;
+    })
+    .then(data => {
+      showModalAlert('✅ ' + (data.message || 'Password berhasil diperbarui.'), 'success');
+      setTimeout(() => {
+        closeChangePasswordModal();
+      }, 1500);
+    })
+    .catch(err => {
+      showModalAlert('❌ ' + err.message, 'error');
+    })
+    .finally(() => {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Simpan Perubahan';
+    });
+}
+
+function showModalAlert(msg, type) {
+  const alertEl = document.getElementById('pwd-modal-alert');
+  if (!alertEl) return;
+  alertEl.className = 'modal-alert ' + type;
+  alertEl.textContent = msg;
+  alertEl.style.display = 'flex';
+}
+
+document.addEventListener('click', e => {
+  const dropdown = document.querySelector('.settings-dropdown-wrapper');
+  if (dropdown && !dropdown.contains(e.target)) {
+    closeSettingsDropdown();
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeSettingsDropdown();
+    closeChangePasswordModal();
+  }
+});
 
 input.addEventListener('input', filterAndRender);
 loadDomains();

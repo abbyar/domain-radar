@@ -25,6 +25,15 @@ CREATE TABLE IF NOT EXISTS domain_map (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Tabel akun autentikasi Web UI (penyimpanan dinamis di database)
+CREATE TABLE IF NOT EXISTS auth_users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_domain ON domain_map(domain);
 CREATE INDEX IF NOT EXISTS idx_local_ip ON proxmox_vms(local_ip);
 CREATE INDEX IF NOT EXISTS idx_public_ip ON proxmox_vms(public_ip);
+CREATE INDEX IF NOT EXISTS idx_auth_username ON auth_users(username);

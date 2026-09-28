@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Domain Radar — Login</title>
+<script>
+  (function() {
+    try {
+      var saved = localStorage.getItem('domain_radar_theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    } catch (e) {}
+  })();
+</script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  :root {
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    --border: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --input-bg: #ffffff;
+    --input-border: #cbd5e1;
+    --input-focus: #3b82f6;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --error-bg: #fef2f2;
+    --error-border: #fecaca;
+    --error-text: #991b1b;
+  }
+
+  [data-theme="dark"] {
+    --bg: #0b0f19;
+    --card-bg: #111827;
+    --border: #1f2937;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --input-bg: #161f30;
+    --input-border: #334155;
+    --input-focus: #3b82f6;
+    --accent: #2563eb;
+    --accent-hover: #3b82f6;
+    --error-bg: rgba(153, 27, 27, 0.25);
+    --error-border: rgba(239, 68, 68, 0.35);
+    --error-text: #fca5a5;
+  }
+
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    transition: background-color .2s ease, color .2s ease;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Subtle background radial glow */
+  body::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, rgba(37, 99, 235, 0.02) 60%, transparent 80%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .theme-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+  }
+
+  .theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: all .15s ease-in-out;
+  }
+  .theme-toggle-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--input-focus);
+  }
+  .theme-icon-wrapper svg {
+    width: 14px;
+    height: 14px;
+    display: block;
+  }
+
+  .login-card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 410px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 28px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    transition: all .2s ease;
+  }
+
+  /* Brand and Radar Header */
+  .brand-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .radar-illustration {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    background: #090d16;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px #38bdf833, 0 4px 14px rgba(15, 23, 42, 0.25);
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+
+  .radar-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .radar-ring {
+    fill: none;
+    stroke: rgba(56, 189, 248, 0.22);
+    stroke-width: 1.2;
+  }
+  .radar-grid {
+    stroke: rgba(56, 189, 248, 0.25);
+    stroke-width: 1;
+    stroke-dasharray: 2 2;
+  }
+  .radar-sweep-group {
+    transform-origin: 50px 50px;
+    animation: radar-spin 3.2s linear infinite;
+  }
+  @keyframes radar-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .radar-sweep {
+    fill: url(#radarSweepGrad);
+  }
+  .radar-sweep-line {
+    stroke: #38bdf8;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+  .radar-center {
+    fill: #38bdf8;
+  }
+  .radar-blip {
+    animation: blip-pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes blip-pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 3px currentColor); }
+  }
+  .blip-safeline { fill: #3b82f6; animation-delay: 0.2s; }
+  .blip-npm { fill: #10b981; animation-delay: 0.9s; }
+  .blip-vm { fill: #f97316; animation-delay: 1.5s; }
+
+  .brand-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+
+  .brand-desc {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  /* Error Alert */
+  .alert-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    color: var(--error-text);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    margin-bottom: 20px;
+    animation: alert-pop .2s ease-out;
+  }
+  @keyframes alert-pop {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Form Elements */
+  .form-group {
+    margin-bottom: 18px;
+  }
+  .form-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .input-icon {
+    position: absolute;
+    left: 12px;
+    width: 16px;
+    height: 16px;
+    color: var(--text-secondary);
+    pointer-events: none;
+  }
+  .form-input {
+    width: 100%;
+    padding: 10px 14px 10px 38px;
+    font-size: 0.92rem;
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    outline: none;
+    transition: all .15s ease-in-out;
+    font-family: inherit;
+  }
+  .form-input:focus {
+    border-color: var(--input-focus);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+  }
+  .toggle-pwd-btn {
+    position: absolute;
+    right: 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  }
+  .toggle-pwd-btn:hover {
+    color: var(--text-primary);
+  }
+  .toggle-pwd-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .form-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    font-size: 0.8rem;
+  }
+  .remember-me {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    user-select: none;
+    color: var(--text-secondary);
+  }
+  .remember-me input {
+    cursor: pointer;
+    accent-color: var(--accent);
+    width: 15px;
+    height: 15px;
+  }
+
+  .submit-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--accent);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 11px 16px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color .15s ease, transform .1s ease, box-shadow .15s ease;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
+    font-family: inherit;
+  }
+  .submit-btn:hover {
+    background: var(--accent-hover);
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+  }
+  .submit-btn:active {
+    transform: translateY(1px);
+  }
+  .submit-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .login-footer {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 0.74rem;
+    color: var(--text-secondary);
+  }
+  .login-footer code {
+    font-family: ui-monospace, monospace;
+    font-size: 0.72rem;
+    background: rgba(100, 116, 139, 0.12);
+    padding: 2px 5px;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Theme Toggle -->
+  <div class="theme-toggle">
+    <button id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleTheme()" type="button" aria-label="Toggle theme">
+      <span id="theme-icon-container" class="theme-icon-wrapper"></span>
+      <span id="theme-text">Dark</span>
+    </button>
+  </div>
+
+  <div class="login-card">
+    <div class="brand-section">
+      <div class="radar-illustration" aria-hidden="true">
+        <svg class="radar-svg" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="radarSweepGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.05"/>
+            </linearGradient>
+          </defs>
+          <circle cx="50" cy="50" r="46" class="radar-ring" />
+          <circle cx="50" cy="50" r="31" class="radar-ring" />
+          <circle cx="50" cy="50" r="16" class="radar-ring" />
+          <line x1="50" y1="4" x2="50" y2="96" class="radar-grid" />
+          <line x1="4" y1="50" x2="96" y2="50" class="radar-grid" />
+          <g class="radar-sweep-group">
+            <path d="M 50 50 L 50 4 A 46 46 0 0 1 82.5 17.5 Z" class="radar-sweep" />
+            <line x1="50" y1="50" x2="82.5" y2="17.5" class="radar-sweep-line" />
+          </g>
+          <circle cx="68" cy="32" r="3.2" class="radar-blip blip-safeline" />
+          <circle cx="34" cy="64" r="2.8" class="radar-blip blip-npm" />
+          <circle cx="62" cy="74" r="2.5" class="radar-blip blip-vm" />
+          <circle cx="50" cy="50" r="3.5" class="radar-center" />
+        </svg>
+      </div>
+      <h1 class="brand-title">Domain Radar</h1>
+      <p class="brand-desc">Authentication required to access infrastructure inventory</p>
+    </div>
+
+    {% if error %}
+    <div class="alert-error" role="alert">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/login">
+      {% if next_url %}
+      <input type="hidden" name="next" value="{{ next_url }}">
+      {% endif %}
+
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <div class="input-wrapper">
+          <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            class="form-input" 
+            placeholder="admin" 
+            value="{{ username or '' }}" 
+            required 
+            autofocus 
+            autocomplete="username"
+          >
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="input-wrapper">
+          <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            class="form-input" 
+            placeholder="••••••••" 
+            required 
+            autocomplete="current-password"
+          >
+          <button type="button" id="toggle-pwd" class="toggle-pwd-btn" onclick="togglePasswordVisibility()" aria-label="Toggle password visibility" title="Show/hide password">
+            <svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-options">
+        <label class="remember-me">
+          <input type="checkbox" name="remember" value="1" checked>
+          <span>Ingat sesi saya (7 hari)</span>
+        </label>
+      </div>
+
+      <button type="submit" class="submit-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+          <polyline points="10 17 15 12 10 7"/>
+          <line x1="15" y1="12" x2="3" y2="12"/>
+        </svg>
+        <span>Masuk ke Radar</span>
+      </button>
+    </form>
+
+    <div class="login-footer">
+      Proteksi sistem aktif &bull; Konfigurasi di <code>config.yaml</code>
+    </div>
+  </div>
+
+<script>
+function togglePasswordVisibility() {
+  const pwdInput = document.getElementById('password');
+  const eyeIcon = document.getElementById('eye-icon');
+  if (pwdInput.type === 'password') {
+    pwdInput.type = 'text';
+    eyeIcon.innerHTML = `
+      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+      <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+      <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+      <line x1="2" y1="2" x2="22" y2="22"/>
+    `;
+  } else {
+    pwdInput.type = 'password';
+    eyeIcon.innerHTML = `
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+      <circle cx="12" cy="12" r="3"/>
+    `;
+  }
+}
+
+/* Theme Management */
+function getPreferredTheme() {
+  const saved = localStorage.getItem('domain_radar_theme');
+  if (saved === 'dark' || saved === 'light') return saved;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function updateThemeUI(theme) {
+  const iconContainer = document.getElementById('theme-icon-container');
+  const themeText = document.getElementById('theme-text');
+  const toggleBtn = document.getElementById('theme-toggle-btn');
+  
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    if (iconContainer) {
+      iconContainer.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+      </svg>`;
+    }
+    if (themeText) themeText.textContent = 'Light';
+    if (toggleBtn) toggleBtn.title = 'Switch to Light mode';
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light');
+    if (iconContainer) {
+      iconContainer.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+      </svg>`;
+    }
+    if (themeText) themeText.textContent = 'Dark';
+    if (toggleBtn) toggleBtn.title = 'Switch to Dark mode';
+  }
+}
+
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('domain_radar_theme', newTheme);
+  updateThemeUI(newTheme);
+}
+
+try {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (!localStorage.getItem('domain_radar_theme')) {
+      updateThemeUI(e.matches ? 'dark' : 'light');
+    }
+  });
+} catch (e) {}
+
+updateThemeUI(getPreferredTheme());
+</script>
+</body>
+</html>

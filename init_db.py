@@ -33,6 +33,22 @@ except sqlite3.OperationalError:
 
 conn.executescript(schema)
 conn.commit()
+
+# Seed default admin user in auth_users if table is empty
+with open("config.yaml") as f:
+    cfg = yaml.safe_load(f) or {}
+auth_cfg = cfg.get("auth", {})
+default_user = auth_cfg.get("username", "admin")
+default_pass = auth_cfg.get("password", "adminpassword")
+
+user_count = conn.execute("SELECT COUNT(*) FROM auth_users").fetchone()[0]
+if user_count == 0:
+    from werkzeug.security import generate_password_hash
+    pwd_hash = default_pass if default_pass.startswith(("scrypt:", "pbkdf2:", "argon2:")) else generate_password_hash(default_pass)
+    conn.execute("INSERT INTO auth_users (username, password_hash) VALUES (?, ?)", (default_user, pwd_hash))
+    conn.commit()
+    print(f"Default admin user '{default_user}' created in database.")
+
 conn.close()
 
 print(f"Database '{db_path}' initialized and ready.")
