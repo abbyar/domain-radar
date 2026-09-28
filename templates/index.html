@@ -1567,6 +1567,611 @@
     .header-actions { width: 100%; justify-content: space-between; }
     .tech-stack-badges { gap: 4px; }
   }
+
+  /* Inventory Button in Header */
+  .inventory-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: all .15s ease;
+  }
+  .inventory-btn:hover {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #94a3b8;
+  }
+  .inventory-btn svg {
+    color: #2563eb;
+    transition: transform .2s ease;
+  }
+  .inventory-btn:hover svg {
+    transform: translateY(-1px);
+  }
+  .inv-badge-count {
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 9999px;
+    border: 1px solid #bfdbfe;
+  }
+
+  /* Inventory Modal Overlay & Card */
+  .inv-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(5px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+  }
+  .inv-modal-overlay.open {
+    display: flex;
+    animation: inv-modal-fade .15s ease-out;
+  }
+  @keyframes inv-modal-fade {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .inv-modal-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 1080px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+  }
+  .inv-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 22px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+  }
+  .inv-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .inv-title-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2563eb;
+  }
+  .inv-modal-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.2;
+  }
+  .inv-modal-subtitle {
+    font-size: 0.74rem;
+    color: #64748b;
+    margin: 2px 0 0 0;
+  }
+  .inv-modal-close {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s ease;
+  }
+  .inv-modal-close:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+
+  /* Nav Tabs */
+  .inv-tabs-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px 0;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .inv-tabs-bar::-webkit-scrollbar {
+    display: none;
+  }
+  .inv-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s ease;
+    white-space: nowrap;
+  }
+  .inv-tab-btn:hover {
+    color: #0f172a;
+  }
+  .inv-tab-btn.active {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+  }
+  .inv-tab-count {
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: 9999px;
+  }
+  .inv-tab-btn.active .inv-tab-count {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+
+  /* Content Body & Toolbar */
+  .inv-body-container {
+    padding: 16px 22px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .inv-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .inv-search-input {
+    flex: 1;
+    min-width: 200px;
+    max-width: 360px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.82rem;
+    font-family: inherit;
+    outline: none;
+  }
+  .inv-search-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+  }
+  .inv-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .inv-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: #2563eb;
+    color: #fff;
+    border: 1px solid #1d4ed8;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s ease;
+  }
+  .inv-btn-primary:hover {
+    background: #1d4ed8;
+  }
+  .inv-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    background: #fff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s ease;
+  }
+  .inv-btn-secondary:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+
+  /* Tables */
+  .inv-table-wrapper {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow-x: auto;
+    background: #fff;
+  }
+  .inv-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+    text-align: left;
+  }
+  .inv-table th {
+    background: #f8fafc;
+    padding: 9px 14px;
+    font-weight: 700;
+    color: #475569;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .inv-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1e293b;
+    vertical-align: middle;
+  }
+  .inv-table tr:last-child td {
+    border-bottom: none;
+  }
+  .inv-table tr:hover td {
+    background: #f8fafc;
+  }
+  .inv-code-badge {
+    font-family: ui-monospace, monospace;
+    font-size: 0.76rem;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+    font-weight: 600;
+  }
+  .inv-actions-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+  .inv-action-btn {
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: inherit;
+  }
+  .inv-action-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+  .inv-action-btn.btn-test {
+    color: #2563eb;
+    border-color: #bfdbfe;
+    background: #eff6ff;
+  }
+  .inv-action-btn.btn-test:hover {
+    background: #dbeafe;
+  }
+  .inv-action-btn.btn-del {
+    color: #dc2626;
+    border-color: #fecaca;
+    background: #fef2f2;
+  }
+  .inv-action-btn.btn-del:hover {
+    background: #fee2e2;
+  }
+
+  /* Status message alert inside table row test */
+  .inv-test-res {
+    font-size: 0.72rem;
+    margin-top: 4px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    line-height: 1.3;
+  }
+  .inv-test-res.success {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+  }
+  .inv-test-res.error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
+  .inv-test-res.warning {
+    background: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fde68a;
+  }
+
+  /* Form Submodal / Overlay */
+  .inv-form-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(3px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    padding: 16px;
+  }
+  .inv-form-overlay.open {
+    display: flex;
+    animation: inv-modal-fade .12s ease-out;
+  }
+  .inv-form-card {
+    background: #fff;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 520px;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+    overflow: hidden;
+  }
+  .inv-form-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .inv-form-title {
+    font-weight: 700;
+    font-size: 0.98rem;
+    color: #0f172a;
+    margin: 0;
+  }
+  .inv-form-body {
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 75vh;
+    overflow-y: auto;
+  }
+  .inv-form-row {
+    display: flex;
+    gap: 10px;
+  }
+  .inv-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+  }
+  .inv-form-group label {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #475569;
+  }
+  .inv-form-group input, .inv-form-group select {
+    padding: 7px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-family: inherit;
+    outline: none;
+  }
+  .inv-form-group input:focus, .inv-form-group select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  }
+  .inv-checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .inv-checkbox-group input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+  .inv-checkbox-group label {
+    font-size: 0.78rem;
+    color: #334155;
+    cursor: pointer;
+  }
+  .inv-form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 18px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  /* Dark theme overrides for Inventory UI */
+  [data-theme="dark"] .inventory-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+  [data-theme="dark"] .inventory-btn:hover {
+    background: #283548;
+    color: #f8fafc;
+    border-color: #475569;
+  }
+  [data-theme="dark"] .inventory-btn svg {
+    color: #60a5fa;
+  }
+  [data-theme="dark"] .inv-badge-count {
+    background: rgba(37, 99, 235, 0.2);
+    color: #93c5fd;
+    border-color: rgba(59, 130, 246, 0.35);
+  }
+  [data-theme="dark"] .inv-modal-card {
+    background: #111827;
+    border-color: #1f2937;
+    color: #f1f5f9;
+  }
+  [data-theme="dark"] .inv-modal-header,
+  [data-theme="dark"] .inv-tabs-bar {
+    background: #0b1120;
+    border-bottom-color: #1f2937;
+  }
+  [data-theme="dark"] .inv-title-icon {
+    background: rgba(37, 99, 235, 0.2);
+    border-color: rgba(59, 130, 246, 0.35);
+    color: #60a5fa;
+  }
+  [data-theme="dark"] .inv-modal-title {
+    color: #f8fafc;
+  }
+  [data-theme="dark"] .inv-modal-subtitle {
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .inv-tab-btn {
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .inv-tab-btn:hover {
+    color: #f8fafc;
+  }
+  [data-theme="dark"] .inv-tab-btn.active {
+    color: #60a5fa;
+    border-bottom-color: #60a5fa;
+  }
+  [data-theme="dark"] .inv-tab-count {
+    background: #1e293b;
+    color: #cbd5e1;
+  }
+  [data-theme="dark"] .inv-tab-btn.active .inv-tab-count {
+    background: rgba(37, 99, 235, 0.3);
+    color: #93c5fd;
+  }
+  [data-theme="dark"] .inv-search-input {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
+  }
+  [data-theme="dark"] .inv-btn-secondary {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+  }
+  [data-theme="dark"] .inv-btn-secondary:hover {
+    background: #283548;
+    color: #f8fafc;
+  }
+  [data-theme="dark"] .inv-table-wrapper {
+    border-color: #1f2937;
+    background: #111827;
+  }
+  [data-theme="dark"] .inv-table th {
+    background: #0b1120;
+    color: #94a3b8;
+    border-bottom-color: #1f2937;
+  }
+  [data-theme="dark"] .inv-table td {
+    border-bottom-color: #1f2937;
+    color: #e2e8f0;
+  }
+  [data-theme="dark"] .inv-table tr:hover td {
+    background: #1a2234;
+  }
+  [data-theme="dark"] .inv-code-badge {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+  }
+  [data-theme="dark"] .inv-action-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+  }
+  [data-theme="dark"] .inv-action-btn:hover {
+    background: #283548;
+    color: #f8fafc;
+  }
+  [data-theme="dark"] .inv-action-btn.btn-test {
+    background: rgba(37, 99, 235, 0.2);
+    border-color: rgba(59, 130, 246, 0.35);
+    color: #93c5fd;
+  }
+  [data-theme="dark"] .inv-action-btn.btn-test:hover {
+    background: rgba(37, 99, 235, 0.35);
+  }
+  [data-theme="dark"] .inv-action-btn.btn-del {
+    background: rgba(220, 38, 38, 0.2);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+  }
+  [data-theme="dark"] .inv-action-btn.btn-del:hover {
+    background: rgba(220, 38, 38, 0.35);
+  }
+  [data-theme="dark"] .inv-form-card {
+    background: #111827;
+    border-color: #1f2937;
+    color: #f8fafc;
+  }
+  [data-theme="dark"] .inv-form-header,
+  [data-theme="dark"] .inv-form-footer {
+    background: #0b1120;
+    border-color: #1f2937;
+  }
+  [data-theme="dark"] .inv-form-title {
+    color: #f8fafc;
+  }
+  [data-theme="dark"] .inv-form-group label {
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .inv-form-group input,
+  [data-theme="dark"] .inv-form-group select {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
+  }
+  [data-theme="dark"] .inv-checkbox-group label {
+    color: #cbd5e1;
+  }
 </style>
 </head>
 <body>
@@ -1625,6 +2230,18 @@
         <span class="tech-chip chip-vmware" title="VMware ESXi & vCenter">VMware ESXi</span>
       </div>
 
+      <!-- Inventory Management Feature -->
+      <button id="inventory-btn" class="inventory-btn" onclick="openInventoryModal()" title="Kelola inventory Proxmox, VMware, Safeline & NPM di Database">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+          <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+          <line x1="6" y1="6" x2="6.01" y2="6"/>
+          <line x1="6" y1="18" x2="6.01" y2="18"/>
+        </svg>
+        <span>Inventory</span>
+        <span id="inv-total-badge" class="inv-badge-count">...</span>
+      </button>
+
       <!-- Rescan Feature -->
       <div class="rescan-container">
         <select id="rescan-mode" class="rescan-mode-select" title="Select scan mode">
@@ -1664,6 +2281,15 @@
             <span class="menu-user-name">{{ current_user }}</span>
           </div>
           <div class="menu-divider"></div>
+          <button type="button" class="menu-item" onclick="openInventoryModal(); closeSettingsDropdown();" role="menuitem">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+              <line x1="6" y1="6" x2="6.01" y2="6"/>
+              <line x1="6" y1="18" x2="6.01" y2="18"/>
+            </svg>
+            <span>Kelola Inventory</span>
+          </button>
           <button type="button" class="menu-item" onclick="openChangePasswordModal()" role="menuitem">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -1741,6 +2367,118 @@
     </div>
   </div>
   {% endif %}
+
+  <!-- Modal Inventory Management -->
+  <div id="inv-modal-overlay" class="inv-modal-overlay" onclick="handleInvModalOverlayClick(event)">
+    <div class="inv-modal-card" role="dialog" aria-modal="true" aria-labelledby="inv-modal-title">
+      <!-- Modal Header -->
+      <div class="inv-modal-header">
+        <div class="inv-title-group">
+          <div class="inv-title-icon">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+              <line x1="6" y1="6" x2="6.01" y2="6"/>
+              <line x1="6" y1="18" x2="6.01" y2="18"/>
+            </svg>
+          </div>
+          <div>
+            <h2 id="inv-modal-title" class="inv-modal-title">Inventory Management</h2>
+            <p class="inv-modal-subtitle">Kelola host hypervisor & reverse proxy langsung dari database SQLite (inventory.db)</p>
+          </div>
+        </div>
+        <button type="button" class="inv-modal-close" onclick="closeInventoryModal()" title="Tutup Modal (Esc)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="inv-tabs-bar" role="tablist">
+        <button type="button" class="inv-tab-btn active" id="tab-proxmox" onclick="switchInvTab('proxmox')">
+          <span>Proxmox VE</span>
+          <span id="inv-count-proxmox" class="inv-tab-count">0</span>
+        </button>
+        <button type="button" class="inv-tab-btn" id="tab-vmware" onclick="switchInvTab('vmware')">
+          <span>VMware</span>
+          <span id="inv-count-vmware" class="inv-tab-count">0</span>
+        </button>
+        <button type="button" class="inv-tab-btn" id="tab-safeline" onclick="switchInvTab('safeline')">
+          <span>Safeline WAF</span>
+          <span id="inv-count-safeline" class="inv-tab-count">0</span>
+        </button>
+        <button type="button" class="inv-tab-btn" id="tab-npm" onclick="switchInvTab('npm')">
+          <span>NPM</span>
+          <span id="inv-count-npm" class="inv-tab-count">0</span>
+        </button>
+        <button type="button" class="inv-tab-btn" id="tab-overrides" onclick="switchInvTab('overrides')">
+          <span>Manual Overrides</span>
+          <span id="inv-count-overrides" class="inv-tab-count">0</span>
+        </button>
+        <button type="button" class="inv-tab-btn" id="tab-ssh" onclick="switchInvTab('ssh')">
+          <span>SSH Default</span>
+        </button>
+      </div>
+
+      <!-- Content Body -->
+      <div class="inv-body-container">
+        <!-- Toolbar -->
+        <div class="inv-toolbar" id="inv-toolbar">
+          <input type="text" id="inv-search-input" class="inv-search-input" placeholder="Cari host atau IP..." oninput="filterInvTable()">
+          <div class="inv-toolbar-actions">
+            <button type="button" id="inv-add-btn" class="inv-btn-primary" onclick="openAddHostModal()">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              <span id="inv-add-btn-label">Tambah Host</span>
+            </button>
+            <button type="button" class="inv-btn-secondary" onclick="reimportFromYaml()" title="Sinkronkan/timpa data database dari file config.yaml">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span>Sync dari config.yaml</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table Display Area -->
+        <div id="inv-table-container">
+          <div style="text-align: center; padding: 30px; color: #94a3b8;">Memuat data inventory...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submodal: Add / Edit Host Form -->
+  <div id="inv-form-overlay" class="inv-form-overlay" onclick="handleInvFormOverlayClick(event)">
+    <div class="inv-form-card" role="dialog" aria-modal="true" aria-labelledby="inv-form-title">
+      <div class="inv-form-header">
+        <h3 id="inv-form-title" class="inv-form-title">Tambah Host</h3>
+        <button type="button" class="inv-modal-close" onclick="closeInvFormModal()">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form id="inv-host-form" onsubmit="submitInvHostForm(event)">
+        <input type="hidden" id="inv-form-id" value="">
+        <div class="inv-form-body" id="inv-form-body">
+          <!-- Dynamic form fields injected by JS -->
+        </div>
+        <div id="inv-form-alert" class="modal-alert" style="display:none; margin: 0 18px 10px;"></div>
+        <div class="inv-form-footer">
+          <button type="button" class="modal-btn-cancel" onclick="closeInvFormModal()">Batal</button>
+          <button type="submit" id="inv-form-save-btn" class="modal-btn-save">Simpan Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
 <script>
 const input = document.getElementById('q');
@@ -2388,12 +3126,718 @@ document.addEventListener('click', e => {
   }
 });
 
+// ============================================================================
+// Inventory Management Logic (Database-backed)
+// ============================================================================
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+let currentInvTab = 'proxmox';
+let invData = {
+  proxmox: [],
+  vmware: [],
+  safeline: [],
+  npm: [],
+  overrides: [],
+  ssh: {}
+};
+
+function openInventoryModal() {
+  const modal = document.getElementById('inv-modal-overlay');
+  if (!modal) return;
+  modal.classList.add('open');
+  loadInventorySummary();
+  switchInvTab(currentInvTab);
+}
+
+function closeInventoryModal() {
+  const modal = document.getElementById('inv-modal-overlay');
+  if (modal) modal.classList.remove('open');
+  closeInvFormModal();
+}
+
+function handleInvModalOverlayClick(e) {
+  if (e.target.id === 'inv-modal-overlay') {
+    closeInventoryModal();
+  }
+}
+
+function handleInvFormOverlayClick(e) {
+  if (e.target.id === 'inv-form-overlay') {
+    closeInvFormModal();
+  }
+}
+
+function closeInvFormModal() {
+  const formModal = document.getElementById('inv-form-overlay');
+  if (formModal) formModal.classList.remove('open');
+  const alertEl = document.getElementById('inv-form-alert');
+  if (alertEl) alertEl.style.display = 'none';
+}
+
+function loadInventorySummary() {
+  fetch('/api/inventory/summary')
+    .then(async r => {
+      if (!r.ok) return null;
+      try {
+        return await r.json();
+      } catch (e) {
+        return null;
+      }
+    })
+    .then(res => {
+      if (res && res.status === 'success' && res.data) {
+        const d = res.data;
+        const total = (d.proxmox_count || 0) + (d.vmware_count || 0) + (d.safeline_count || 0) + (d.npm_count || 0);
+        const totalBadge = document.getElementById('inv-total-badge');
+        if (totalBadge) totalBadge.textContent = total;
+
+        const pveCount = document.getElementById('inv-count-proxmox');
+        if (pveCount) pveCount.textContent = d.proxmox_count || 0;
+
+        const vmwCount = document.getElementById('inv-count-vmware');
+        if (vmwCount) vmwCount.textContent = d.vmware_count || 0;
+
+        const slCount = document.getElementById('inv-count-safeline');
+        if (slCount) slCount.textContent = d.safeline_count || 0;
+
+        const npmCount = document.getElementById('inv-count-npm');
+        if (npmCount) npmCount.textContent = d.npm_count || 0;
+
+        const ovCount = document.getElementById('inv-count-overrides');
+        if (ovCount) ovCount.textContent = d.overrides_count || 0;
+
+        if (res.ssh_default) invData.ssh = res.ssh_default;
+      }
+    })
+    .catch(err => console.error('Failed loading inventory summary:', err));
+}
+
+function switchInvTab(tabName) {
+  currentInvTab = tabName;
+  document.querySelectorAll('.inv-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.id === `tab-${tabName}`);
+  });
+
+  const addBtn = document.getElementById('inv-add-btn');
+  const searchInput = document.getElementById('inv-search-input');
+  if (searchInput) searchInput.value = '';
+
+  if (tabName === 'ssh') {
+    if (addBtn) addBtn.style.display = 'none';
+    if (searchInput) searchInput.style.display = 'none';
+    renderSshSettings();
+  } else {
+    if (addBtn) {
+      addBtn.style.display = 'inline-flex';
+      const labels = {
+        proxmox: 'Tambah Proxmox',
+        vmware: 'Tambah VMware',
+        safeline: 'Tambah Safeline',
+        npm: 'Tambah NPM',
+        overrides: 'Tambah Override'
+      };
+      const labelSpan = document.getElementById('inv-add-btn-label');
+      if (labelSpan) labelSpan.textContent = labels[tabName] || 'Tambah';
+    }
+    if (searchInput) searchInput.style.display = 'block';
+    loadInvTabContent(tabName);
+  }
+}
+
+function loadInvTabContent(tabName) {
+  const container = document.getElementById('inv-table-container');
+  if (!container) return;
+  container.innerHTML = '<div style="text-align: center; padding: 25px; color: #94a3b8;">Memuat data...</div>';
+
+  fetch(`/api/inventory/${tabName}`)
+    .then(async r => {
+      const text = await r.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        if (!r.ok) {
+          throw new Error(`Server merespons HTTP ${r.status}. Harap restart proses 'python app.py' agar route API baru aktif.`);
+        }
+        throw new Error('Respon server bukan format JSON yang valid.');
+      }
+      if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+      return data;
+    })
+    .then(res => {
+      if (res.status === 'success') {
+        invData[tabName] = res.data || [];
+        renderInvTable();
+      } else {
+        container.innerHTML = `<div style="padding: 20px; color: #dc2626;">Gagal memuat: ${escapeHtml(res.message)}</div>`;
+      }
+    })
+    .catch(err => {
+      container.innerHTML = `
+        <div style="padding: 20px; color: #dc2626; line-height: 1.5;">
+          <b>Gagal Memuat Data:</b><br>${escapeHtml(err.message)}
+        </div>`;
+    });
+}
+
+function filterInvTable() {
+  renderInvTable();
+}
+
+function renderInvTable() {
+  const container = document.getElementById('inv-table-container');
+  if (!container) return;
+  const search = (document.getElementById('inv-search-input')?.value || '').trim().toLowerCase();
+  const list = invData[currentInvTab] || [];
+
+  const filtered = list.filter(item => {
+    if (!search) return true;
+    return Object.values(item).some(val => String(val || '').toLowerCase().includes(search));
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 35px 20px; color: #94a3b8; border: 1px dashed #cbd5e1; border-radius: 8px;">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 8px; opacity: 0.7;">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+        <p style="margin:0; font-size: 0.85rem;">Tidak ada host yang cocok.</p>
+      </div>`;
+    return;
+  }
+
+  let html = '<div class="inv-table-wrapper"><table class="inv-table">';
+
+  if (currentInvTab === 'proxmox') {
+    html += `
+      <thead>
+        <tr>
+          <th>Nama Host</th>
+          <th>API Host</th>
+          <th>SSH Host : Port</th>
+          <th>SSH User & Key</th>
+          <th style="text-align: right;">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    filtered.forEach(h => {
+      const keyShort = h.ssh_key_path ? h.ssh_key_path.split('/').pop().split('\\').pop() : 'default';
+      html += `
+        <tr id="row-proxmox-${h.id}">
+          <td><b>${escapeHtml(h.name)}</b></td>
+          <td><span class="inv-code-badge">${escapeHtml(h.api_host)}</span></td>
+          <td><span class="inv-code-badge">${escapeHtml(h.ssh_host || h.api_host)}:${h.ssh_port || 22}</span></td>
+          <td>${escapeHtml(h.ssh_user || 'root')} (${escapeHtml(keyShort)})</td>
+          <td>
+            <div class="inv-actions-cell">
+              <button type="button" class="inv-action-btn btn-test" onclick="testHostItem('proxmox', ${h.id})" title="Test Koneksi API & SSH">
+                <span>Test</span>
+              </button>
+              <button type="button" class="inv-action-btn" onclick="openEditHostModal('proxmox', ${h.id})" title="Edit Host">Edit</button>
+              <button type="button" class="inv-action-btn btn-del" onclick="deleteHostItem('proxmox', ${h.id}, '${escapeHtml(h.name)}')" title="Hapus Host">Hapus</button>
+            </div>
+            <div id="test-res-proxmox-${h.id}"></div>
+          </td>
+        </tr>`;
+    });
+  } else if (currentInvTab === 'vmware') {
+    html += `
+      <thead>
+        <tr>
+          <th>Nama Host</th>
+          <th>Host / IP</th>
+          <th>Username</th>
+          <th>Port</th>
+          <th style="text-align: right;">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    filtered.forEach(h => {
+      html += `
+        <tr id="row-vmware-${h.id}">
+          <td><b>${escapeHtml(h.name)}</b></td>
+          <td><span class="inv-code-badge">${escapeHtml(h.host)}</span></td>
+          <td>${escapeHtml(h.user)}</td>
+          <td>${h.port || 443}</td>
+          <td>
+            <div class="inv-actions-cell">
+              <button type="button" class="inv-action-btn btn-test" onclick="testHostItem('vmware', ${h.id})" title="Test Login & Koneksi">
+                <span>Test</span>
+              </button>
+              <button type="button" class="inv-action-btn" onclick="openEditHostModal('vmware', ${h.id})" title="Edit Host">Edit</button>
+              <button type="button" class="inv-action-btn btn-del" onclick="deleteHostItem('vmware', ${h.id}, '${escapeHtml(h.name)}')" title="Hapus Host">Hapus</button>
+            </div>
+            <div id="test-res-vmware-${h.id}"></div>
+          </td>
+        </tr>`;
+    });
+  } else if (currentInvTab === 'safeline') {
+    html += `
+      <thead>
+        <tr>
+          <th>IP Lokal VM</th>
+          <th>API Base URL</th>
+          <th>API Token</th>
+          <th style="text-align: right;">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    filtered.forEach(h => {
+      const tokShort = h.api_token ? (h.api_token.substring(0, 8) + '••••••••') : 'None';
+      html += `
+        <tr id="row-safeline-${h.id}">
+          <td><span class="inv-code-badge">${escapeHtml(h.local_ip)}</span></td>
+          <td><a href="${escapeHtml(h.api_base)}" target="_blank" style="color: #2563eb; text-decoration: none;">${escapeHtml(h.api_base)}</a></td>
+          <td><code>${escapeHtml(tokShort)}</code></td>
+          <td>
+            <div class="inv-actions-cell">
+              <button type="button" class="inv-action-btn btn-test" onclick="testHostItem('safeline', ${h.id})" title="Test Open API Token">
+                <span>Test</span>
+              </button>
+              <button type="button" class="inv-action-btn" onclick="openEditHostModal('safeline', ${h.id})" title="Edit Instance">Edit</button>
+              <button type="button" class="inv-action-btn btn-del" onclick="deleteHostItem('safeline', ${h.id}, '${escapeHtml(h.local_ip)}')" title="Hapus">Hapus</button>
+            </div>
+            <div id="test-res-safeline-${h.id}"></div>
+          </td>
+        </tr>`;
+    });
+  } else if (currentInvTab === 'npm') {
+    html += `
+      <thead>
+        <tr>
+          <th>IP Lokal VM</th>
+          <th>API Base URL</th>
+          <th>Email / Username</th>
+          <th style="text-align: right;">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    filtered.forEach(h => {
+      html += `
+        <tr id="row-npm-${h.id}">
+          <td><span class="inv-code-badge">${escapeHtml(h.local_ip)}</span></td>
+          <td><a href="${escapeHtml(h.api_base)}" target="_blank" style="color: #059669; text-decoration: none;">${escapeHtml(h.api_base)}</a></td>
+          <td>${escapeHtml(h.username)}</td>
+          <td>
+            <div class="inv-actions-cell">
+              <button type="button" class="inv-action-btn btn-test" onclick="testHostItem('npm', ${h.id})" title="Test Login NPM API">
+                <span>Test</span>
+              </button>
+              <button type="button" class="inv-action-btn" onclick="openEditHostModal('npm', ${h.id})" title="Edit Instance">Edit</button>
+              <button type="button" class="inv-action-btn btn-del" onclick="deleteHostItem('npm', ${h.id}, '${escapeHtml(h.local_ip)}')" title="Hapus">Hapus</button>
+            </div>
+            <div id="test-res-npm-${h.id}"></div>
+          </td>
+        </tr>`;
+    });
+  } else if (currentInvTab === 'overrides') {
+    html += `
+      <thead>
+        <tr>
+          <th>Domain</th>
+          <th>Source Type</th>
+          <th>Found On IP</th>
+          <th style="text-align: right;">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    filtered.forEach(h => {
+      html += `
+        <tr id="row-overrides-${h.id}">
+          <td><b>${escapeHtml(h.domain)}</b></td>
+          <td><span class="badge">${escapeHtml(h.source_type || 'manual')}</span></td>
+          <td><span class="inv-code-badge">${escapeHtml(h.found_on_ip)}</span></td>
+          <td>
+            <div class="inv-actions-cell">
+              <button type="button" class="inv-action-btn btn-del" onclick="deleteHostItem('overrides', ${h.id}, '${escapeHtml(h.domain)}')" title="Hapus Override">Hapus</button>
+            </div>
+          </td>
+        </tr>`;
+    });
+  }
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+function renderSshSettings() {
+  const container = document.getElementById('inv-table-container');
+  if (!container) return;
+  const cfg = invData.ssh || { user: 'root', key_path: '', port: 22, timeout: 8 };
+
+  container.innerHTML = `
+    <div style="max-width: 550px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" class="inv-form-card">
+      <h3 style="margin-top: 0; font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 4px;">Kredensial SSH Default untuk Scan Guest VM</h3>
+      <p style="font-size: 0.78rem; color: #64748b; margin-top: 0; margin-bottom: 16px;">
+        Kredensial ini digunakan saat Domain Radar melakukan SSH scan ke dalam VM Linux (Nginx/aaPanel).
+      </p>
+      <form onsubmit="saveSshSettings(event)">
+        <div class="inv-form-group" style="margin-bottom: 12px;">
+          <label for="ssh-user">Username SSH Default</label>
+          <input type="text" id="ssh-user" value="${escapeHtml(cfg.user || 'root')}" required>
+        </div>
+        <div class="inv-form-group" style="margin-bottom: 12px;">
+          <label for="ssh-key">Path SSH Private Key</label>
+          <input type="text" id="ssh-key" value="${escapeHtml(cfg.key_path || '')}" placeholder="misal: C:/Users/user/.ssh/id_rsa_inventory">
+        </div>
+        <div class="inv-form-row" style="margin-bottom: 16px;">
+          <div class="inv-form-group">
+            <label for="ssh-port">Port SSH</label>
+            <input type="number" id="ssh-port" value="${cfg.port || 22}" required>
+          </div>
+          <div class="inv-form-group">
+            <label for="ssh-timeout">Timeout (detik)</label>
+            <input type="number" id="ssh-timeout" value="${cfg.timeout || 8}" required>
+          </div>
+        </div>
+        <div id="ssh-alert" class="modal-alert" style="display:none; margin-bottom: 12px;"></div>
+        <button type="submit" class="modal-btn-save" id="btn-save-ssh">Simpan Pengaturan SSH</button>
+      </form>
+    </div>`;
+}
+
+function saveSshSettings(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn-save-ssh');
+  const alertEl = document.getElementById('ssh-alert');
+  btn.disabled = true;
+  btn.textContent = 'Menyimpan...';
+
+  const payload = {
+    user: document.getElementById('ssh-user').value.trim(),
+    key_path: document.getElementById('ssh-key').value.trim(),
+    port: parseInt(document.getElementById('ssh-port').value) || 22,
+    timeout: parseInt(document.getElementById('ssh-timeout').value) || 8
+  };
+
+  fetch('/api/inventory/ssh-default', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(r => r.json())
+    .then(res => {
+      if (res.status === 'success') {
+        invData.ssh = payload;
+        alertEl.className = 'modal-alert success';
+        alertEl.textContent = '✅ ' + res.message;
+        alertEl.style.display = 'flex';
+      } else {
+        throw new Error(res.message);
+      }
+    })
+    .catch(err => {
+      alertEl.className = 'modal-alert error';
+      alertEl.textContent = '❌ ' + err.message;
+      alertEl.style.display = 'flex';
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.textContent = 'Simpan Pengaturan SSH';
+    });
+}
+
+function openAddHostModal() {
+  const formOverlay = document.getElementById('inv-form-overlay');
+  const title = document.getElementById('inv-form-title');
+  const body = document.getElementById('inv-form-body');
+  const formId = document.getElementById('inv-form-id');
+  formId.value = '';
+  document.getElementById('inv-form-alert').style.display = 'none';
+
+  if (currentInvTab === 'proxmox') {
+    title.textContent = 'Tambah Host Proxmox VE';
+    body.innerHTML = `
+      <div class="inv-form-group">
+        <label>Nama Host (Unik, misal: pve-01)</label>
+        <input type="text" name="name" required placeholder="pve-01">
+      </div>
+      <div class="inv-form-row">
+        <div class="inv-form-group">
+          <label>API Host / IP</label>
+          <input type="text" name="api_host" required placeholder="192.168.36.221">
+        </div>
+        <div class="inv-form-group">
+          <label>SSH Host / IP</label>
+          <input type="text" name="ssh_host" placeholder="Bisa sama dengan API Host">
+        </div>
+      </div>
+      <div class="inv-form-row">
+        <div class="inv-form-group">
+          <label>SSH User</label>
+          <input type="text" name="ssh_user" value="root">
+        </div>
+        <div class="inv-form-group">
+          <label>SSH Port</label>
+          <input type="number" name="ssh_port" value="22">
+        </div>
+      </div>
+      <div class="inv-form-group">
+        <label>SSH Private Key Path</label>
+        <input type="text" name="ssh_key_path" placeholder="C:/Users/user/.ssh/id_rsa_inventory">
+      </div>
+      <div class="inv-checkbox-group">
+        <input type="checkbox" name="verify_ssl" id="pve-vssl">
+        <label for="pve-vssl">Verifikasi Sertifikat SSL API (Port 8006)</label>
+      </div>`;
+  } else if (currentInvTab === 'vmware') {
+    title.textContent = 'Tambah Host VMware (vCenter / ESXi)';
+    body.innerHTML = `
+      <div class="inv-form-group">
+        <label>Nama Host (misal: vcenter atau esxi-01)</label>
+        <input type="text" name="name" required placeholder="vcenter">
+      </div>
+      <div class="inv-form-row">
+        <div class="inv-form-group">
+          <label>Host / IP Address</label>
+          <input type="text" name="host" required placeholder="10.220.0.10">
+        </div>
+        <div class="inv-form-group">
+          <label>Port HTTPS</label>
+          <input type="number" name="port" value="443">
+        </div>
+      </div>
+      <div class="inv-form-group">
+        <label>Username (cukup akun Read-Only)</label>
+        <input type="text" name="user" required placeholder="administrator@vsphere.local">
+      </div>
+      <div class="inv-form-group">
+        <label>Password</label>
+        <input type="password" name="password" required placeholder="Password login VMware">
+      </div>
+      <div class="inv-checkbox-group">
+        <input type="checkbox" name="verify_ssl" id="vmw-vssl">
+        <label for="vmw-vssl">Verifikasi Sertifikat SSL</label>
+      </div>`;
+  } else if (currentInvTab === 'safeline') {
+    title.textContent = 'Tambah Instance Safeline WAF';
+    body.innerHTML = `
+      <div class="inv-form-group">
+        <label>IP Lokal VM Tempat Safeline Berjalan</label>
+        <input type="text" name="local_ip" required placeholder="192.168.36.19">
+      </div>
+      <div class="inv-form-group">
+        <label>API Base URL (dengan port Open API)</label>
+        <input type="text" name="api_base" required placeholder="https://192.168.36.19:9443">
+      </div>
+      <div class="inv-form-group">
+        <label>API Token (dari System Management Safeline)</label>
+        <input type="text" name="api_token" required placeholder="Token Open API Safeline">
+      </div>
+      <div class="inv-checkbox-group">
+        <input type="checkbox" name="verify_ssl" id="sl-vssl">
+        <label for="sl-vssl">Verifikasi Sertifikat SSL</label>
+      </div>`;
+  } else if (currentInvTab === 'npm') {
+    title.textContent = 'Tambah Instance Nginx Proxy Manager';
+    body.innerHTML = `
+      <div class="inv-form-group">
+        <label>IP Lokal VM Tempat NPM Berjalan</label>
+        <input type="text" name="local_ip" required placeholder="192.168.36.33">
+      </div>
+      <div class="inv-form-group">
+        <label>API Base URL (Port Admin Web NPM, default 81)</label>
+        <input type="text" name="api_base" required placeholder="http://192.168.36.33:81">
+      </div>
+      <div class="inv-form-group">
+        <label>Email Akun Login NPM</label>
+        <input type="email" name="username" required placeholder="admin@example.com">
+      </div>
+      <div class="inv-form-group">
+        <label>Password Login NPM</label>
+        <input type="password" name="password" required placeholder="Password login NPM">
+      </div>
+      <div class="inv-checkbox-group">
+        <input type="checkbox" name="verify_ssl" id="npm-vssl">
+        <label for="npm-vssl">Verifikasi Sertifikat SSL</label>
+      </div>`;
+  } else if (currentInvTab === 'overrides') {
+    title.textContent = 'Tambah Manual Domain Override';
+    body.innerHTML = `
+      <div class="inv-form-group">
+        <label>Domain</label>
+        <input type="text" name="domain" required placeholder="portal.internal.com">
+      </div>
+      <div class="inv-form-group">
+        <label>Source Type</label>
+        <input type="text" name="source_type" value="manual" placeholder="manual / nginx / aapanel">
+      </div>
+      <div class="inv-form-group">
+        <label>Target IP VM/LXC</label>
+        <input type="text" name="found_on_ip" required placeholder="10.10.5.20">
+      </div>`;
+  }
+
+  formOverlay.classList.add('open');
+}
+
+function openEditHostModal(tabName, id) {
+  const item = (invData[tabName] || []).find(h => h.id === id);
+  if (!item) return;
+
+  openAddHostModal();
+  const title = document.getElementById('inv-form-title');
+  const formId = document.getElementById('inv-form-id');
+  formId.value = id;
+  title.textContent = `Edit ${tabName.toUpperCase()}: ${item.name || item.local_ip || item.domain}`;
+
+  const form = document.getElementById('inv-host-form');
+  for (const [key, val] of Object.entries(item)) {
+    const input = form.elements[key];
+    if (input) {
+      if (input.type === 'checkbox') {
+        input.checked = Boolean(val);
+      } else if (input.type !== 'password') {
+        input.value = val || '';
+      }
+    }
+  }
+
+  // Password fields are optional on edit
+  if (form.elements['password']) {
+    form.elements['password'].required = false;
+    form.elements['password'].placeholder = '(Kosongkan jika tidak diubah)';
+  }
+}
+
+function submitInvHostForm(e) {
+  e.preventDefault();
+  const form = e.target;
+  const formId = document.getElementById('inv-form-id').value;
+  const alertEl = document.getElementById('inv-form-alert');
+  const saveBtn = document.getElementById('inv-form-save-btn');
+
+  const formData = new FormData(form);
+  const payload = {};
+  formData.forEach((value, key) => {
+    payload[key] = value;
+  });
+
+  // Handle checkboxes
+  form.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    payload[cb.name] = cb.checked;
+  });
+
+  const method = formId ? 'PUT' : 'POST';
+  const url = formId ? `/api/inventory/${currentInvTab}/${formId}` : `/api/inventory/${currentInvTab}`;
+
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Menyimpan...';
+  alertEl.style.display = 'none';
+
+  fetch(url, {
+    method: method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(async r => {
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+      return data;
+    })
+    .then(res => {
+      alertEl.className = 'modal-alert success';
+      alertEl.textContent = '✅ ' + (res.message || 'Data berhasil disimpan.');
+      alertEl.style.display = 'flex';
+      loadInventorySummary();
+      loadInvTabContent(currentInvTab);
+      setTimeout(() => {
+        closeInvFormModal();
+      }, 700);
+    })
+    .catch(err => {
+      alertEl.className = 'modal-alert error';
+      alertEl.textContent = '❌ ' + err.message;
+      alertEl.style.display = 'flex';
+    })
+    .finally(() => {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Simpan Data';
+    });
+}
+
+function deleteHostItem(tabName, id, label) {
+  if (!confirm(`Yakin ingin menghapus host '${label}' dari database?`)) return;
+
+  fetch(`/api/inventory/${tabName}/${id}`, { method: 'DELETE' })
+    .then(r => r.json())
+    .then(res => {
+      if (res.status === 'success') {
+        loadInventorySummary();
+        loadInvTabContent(tabName);
+      } else {
+        alert('Gagal menghapus: ' + res.message);
+      }
+    })
+    .catch(err => alert('Error: ' + err.message));
+}
+
+function testHostItem(tabName, id) {
+  const item = (invData[tabName] || []).find(h => h.id === id);
+  if (!item) return;
+
+  const resContainer = document.getElementById(`test-res-${tabName}-${id}`);
+  if (resContainer) {
+    resContainer.innerHTML = '<span class="inv-test-res warning">Menguji koneksi...</span>';
+  }
+
+  fetch(`/api/inventory/${tabName}/test`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(item)
+  })
+    .then(r => r.json())
+    .then(res => {
+      if (!resContainer) return;
+      const type = res.status === 'success' ? 'success' : (res.status === 'warning' ? 'warning' : 'error');
+      resContainer.innerHTML = `<span class="inv-test-res ${type}">${escapeHtml(res.message)}</span>`;
+    })
+    .catch(err => {
+      if (resContainer) {
+        resContainer.innerHTML = `<span class="inv-test-res error">Error: ${escapeHtml(err.message)}</span>`;
+      }
+    });
+}
+
+function reimportFromYaml() {
+  if (!confirm('PERINGATAN: Sinkronisasi ini akan mengimpor ulang data dari config.yaml dan menimpa entri di database SQLite. Lanjutkan?')) {
+    return;
+  }
+  const container = document.getElementById('inv-table-container');
+  if (container) container.innerHTML = '<div style="text-align: center; padding: 25px; color: #94a3b8;">Sinkronisasi dari config.yaml...</div>';
+
+  fetch('/api/inventory/import-yaml', { method: 'POST' })
+    .then(r => r.json())
+    .then(res => {
+      alert('Sinkronisasi selesai! Data berhasil diperbarui di database.');
+      loadInventorySummary();
+      loadInvTabContent(currentInvTab);
+    })
+    .catch(err => {
+      alert('Gagal re-import: ' + err.message);
+      loadInvTabContent(currentInvTab);
+    });
+}
+
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     closeSettingsDropdown();
     closeChangePasswordModal();
+    closeInvFormModal();
+    closeInventoryModal();
   }
 });
+
+loadInventorySummary();
 
 input.addEventListener('input', filterAndRender);
 loadDomains();

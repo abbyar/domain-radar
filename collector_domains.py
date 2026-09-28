@@ -102,7 +102,9 @@ def collect(config, db_path):
     cur.execute("DELETE FROM domain_map WHERE source_type = 'nginx_or_aapanel'")
 
     # Map Proxmox host configs by host name
-    host_map = {h["name"]: h for h in config.get("proxmox_hosts", [])}
+    import inventory_store
+    proxmox_hosts = inventory_store.get_proxmox_hosts() or config.get("proxmox_hosts", [])
+    host_map = {h["name"]: h for h in proxmox_hosts}
 
     # 1. Scan LXC containers via hypervisor (pct exec)
     cur.execute(
@@ -135,9 +137,10 @@ def collect(config, db_path):
     )
     qemu_ips = [row[0] for row in cur.fetchall() if row[0] not in scanned_ips]
     if qemu_ips:
+        ssh_cfg = inventory_store.get_ssh_default() or config.get("ssh_default")
         print(f"[domains] Scanning {len(qemu_ips)} QEMU VMs via direct SSH ...")
         for ip in qemu_ips:
-            domains = scan_vm(ip, config["ssh_default"])
+            domains = scan_vm(ip, ssh_cfg)
             if domains:
                 for domain in domains:
                     cur.execute(
@@ -149,7 +152,8 @@ def collect(config, db_path):
                 total_found += len(domains)
 
     # 3. Insert manual overrides for VMs unreachable via SSH
-    for item in config.get("manual_overrides", []) or []:
+    overrides = inventory_store.get_manual_overrides() or config.get("manual_overrides", []) or []
+    for item in overrides:
         cur.execute(
             """INSERT INTO domain_map (domain, source_type, found_on_ip)
                VALUES (?, ?, ?)""",

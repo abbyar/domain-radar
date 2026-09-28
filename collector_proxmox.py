@@ -103,10 +103,12 @@ def get_ips_lxc(prox, node, vmid):
 
 
 def collect(config, db_path, credentials):
+    import inventory_store
+    proxmox_hosts = inventory_store.get_proxmox_hosts() or config.get("proxmox_hosts", [])
     conn = sqlite3.connect(db_path, timeout=30.0)
     cur = conn.cursor()
 
-    for host_cfg in config["proxmox_hosts"]:
+    for host_cfg in proxmox_hosts:
         name = host_cfg["name"]
         cred = credentials.get(name)
         if not cred:
@@ -128,7 +130,7 @@ def collect(config, db_path, credentials):
             print(f"  FAILED connecting to {name}: {e}")
             continue
 
-        known_hosts = {h["name"] for h in config["proxmox_hosts"]}
+        known_hosts = {h["name"] for h in proxmox_hosts}
         for node in nodes:
             node_name = node["node"]
             if node_name in known_hosts and node_name != host_cfg["name"]:

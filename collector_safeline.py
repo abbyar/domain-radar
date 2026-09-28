@@ -40,10 +40,12 @@ def parse_upstream(upstream_url):
 
 
 def collect(config, db_path):
+    import inventory_store
+    safeline_hosts = inventory_store.get_safeline_hosts() or config.get("safeline_hosts", [])
     conn = sqlite3.connect(db_path, timeout=30.0)
     cur = conn.cursor()
 
-    for sl in config.get("safeline_hosts", []) or []:
+    for sl in safeline_hosts:
         print(f"[safeline] Connecting to {sl['api_base']} ...")
         try:
             sites = fetch_sites(sl)

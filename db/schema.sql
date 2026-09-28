@@ -33,7 +33,81 @@ CREATE TABLE IF NOT EXISTS auth_users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ============================================================================
+-- Tabel Konfigurasi Inventory Node / Host (Menggantikan entri manual config.yaml)
+-- ============================================================================
+
+-- Proxmox VE Hosts
+CREATE TABLE IF NOT EXISTS inv_proxmox_hosts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    api_host TEXT NOT NULL,
+    ssh_host TEXT NOT NULL,
+    ssh_user TEXT DEFAULT 'root',
+    ssh_key_path TEXT,
+    ssh_port INTEGER DEFAULT 22,
+    verify_ssl INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- VMware vCenter & ESXi Hosts
+CREATE TABLE IF NOT EXISTS inv_vmware_hosts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    host TEXT NOT NULL,
+    user TEXT NOT NULL,
+    password TEXT NOT NULL,
+    port INTEGER DEFAULT 443,
+    verify_ssl INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Safeline WAF Instances
+CREATE TABLE IF NOT EXISTS inv_safeline_hosts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    local_ip TEXT NOT NULL,
+    api_base TEXT NOT NULL,
+    api_token TEXT NOT NULL,
+    verify_ssl INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Nginx Proxy Manager (NPM) Instances
+CREATE TABLE IF NOT EXISTS inv_npm_hosts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    local_ip TEXT NOT NULL,
+    api_base TEXT NOT NULL,
+    username TEXT NOT NULL,
+    password TEXT NOT NULL,
+    verify_ssl INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Manual Overrides
+CREATE TABLE IF NOT EXISTS inv_manual_overrides (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    domain TEXT NOT NULL UNIQUE,
+    source_type TEXT DEFAULT 'manual',
+    found_on_ip TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Global Inventory Settings (SSH Default, etc.)
+CREATE TABLE IF NOT EXISTS inv_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_domain ON domain_map(domain);
 CREATE INDEX IF NOT EXISTS idx_local_ip ON proxmox_vms(local_ip);
 CREATE INDEX IF NOT EXISTS idx_public_ip ON proxmox_vms(public_ip);
 CREATE INDEX IF NOT EXISTS idx_auth_username ON auth_users(username);
+CREATE INDEX IF NOT EXISTS idx_inv_pve_name ON inv_proxmox_hosts(name);
+CREATE INDEX IF NOT EXISTS idx_inv_vmware_name ON inv_vmware_hosts(name);
+

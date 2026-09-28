@@ -528,5 +528,203 @@ def api_rescan_status():
         return jsonify(dict(rescan_state))
 
 
+# ============================================================================
+# Inventory Management APIs (Database-backed)
+# ============================================================================
+import inventory_store
+
+
+@app.route("/api/inventory/summary")
+def api_inventory_summary():
+    return jsonify({
+        "status": "success",
+        "data": inventory_store.get_inventory_summary(),
+        "ssh_default": inventory_store.get_ssh_default()
+    })
+
+
+# Proxmox
+@app.route("/api/inventory/proxmox", methods=["GET", "POST"])
+def api_inventory_proxmox():
+    if request.method == "GET":
+        return jsonify({"status": "success", "data": inventory_store.get_proxmox_hosts()})
+    data = request.get_json(silent=True) or request.form.to_dict()
+    try:
+        inventory_store.save_proxmox_host(data)
+        return jsonify({"status": "success", "message": f"Host '{data.get('name')}' berhasil disimpan."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/inventory/proxmox/<int:host_id>", methods=["PUT", "DELETE"])
+def api_inventory_proxmox_item(host_id):
+    if request.method == "DELETE":
+        inventory_store.delete_proxmox_host(host_id)
+        return jsonify({"status": "success", "message": "Host Proxmox berhasil dihapus."})
+    data = request.get_json(silent=True) or request.form.to_dict()
+    try:
+        inventory_store.save_proxmox_host(data, host_id=host_id)
+        return jsonify({"status": "success", "message": "Host Proxmox berhasil diperbarui."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/inventory/proxmox/test", methods=["POST"])
+def api_inventory_proxmox_test():
+    data = request.get_json(silent=True) or request.form.to_dict()
+    res = inventory_store.test_proxmox_connection(data)
+    return jsonify(res)
+
+
+# VMware
+@app.route("/api/inventory/vmware", methods=["GET", "POST"])
+def api_inventory_vmware():
+    if request.method == "GET":
+        hosts = inventory_store.get_vmware_hosts()
+        for h in hosts:
+            h["password_masked"] = "••••••••" if h.get("password") else ""
+            h.pop("password", None)
+        return jsonify({"status": "success", "data": hosts})
+    data = request.get_json(silent=True) or request.form.to_dict()
+    try:
+        inventory_store.save_vmware_host(data)
+        return jsonify({"status": "success", "message": f"Host VMware '{data.get('name')}' berhasil disimpan."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/inventory/vmware/<int:host_id>", methods=["PUT", "DELETE"])
+def api_inventory_vmware_item(host_id):
+    if request.method == "DELETE":
+        inventory_store.delete_vmware_host(host_id)
+        return jsonify({"status": "success", "message": "Host VMware berhasil dihapus."})
+    data = request.get_json(silent=True) or request.form.to_dict()
+    try:
+        inventory_store.save_vmware_host(data, host_id=host_id)
+        return jsonify({"status": "success", "message": "Host VMware berhasil diperbarui."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/inventory/vmware/test", methods=["POST"])
+def api_inventory_vmware_test():
+    data = request.get_json(silent=True) or request.form.to_dict()
+    res = inventory_store.test_vmware_connection(data)
+    return jsonify(res)
+
+
+# Safeline
+@app.route("/api/inventory/safeline", methods=["GET", "POST"])
+def api_inventory_safeline():
+    if request.method == "GET":
+        return jsonify({"status": "success", "data": inventory_store.get_safeline_hosts()})
+    data = request.get_json(silent=True) or request.form.to_dict()
+    try:
+        inventory_store.save_safeline_host(data)
+        return jsonify({"status": "success", "message": f"Safeline pada {data.get('local_ip')} berhasil disimpan."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/inventory/safeline/<int:host_id>", methods=["PUT", "DELETE"])
+def api_inventory_safeline_item(host_id):
+    if request.method == "DELETE":
+        inventory_store.delete_safeline_host(host_id)
+        return jsonify({"status": "success", "message": "Safeline berhasil dihapus."})
+    data = request.get_json(silent=True) or request.form.to_dict()
+    try:
+        inventory_store.save_safeline_host(data, host_id=host_id)
+        return jsonify({"status": "success", "message": "Safeline berhasil diperbarui."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/inventory/safeline/test", methods=["POST"])
+def api_inventory_safeline_test():
+    data = request.get_json(silent=True) or request.form.to_dict()
+    res = inventory_store.test_safeline_connection(data)
+    return jsonify(res)
+
+
+# NPM
+@app.route("/api/inventory/npm", methods=["GET", "POST"])
+def api_inventory_npm():
+    if request.method == "GET":
+        hosts = inventory_store.get_npm_hosts()
+        for h in hosts:
+            h["password_masked"] = "••••••••" if h.get("password") else ""
+            h.pop("password", None)
+        return jsonify({"status": "success", "data": hosts})
+    data = request.get_json(silent=True) or request.form.to_dict()
+    try:
+        inventory_store.save_npm_host(data)
+        return jsonify({"status": "success", "message": f"NPM pada {data.get('local_ip')} berhasil disimpan."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/inventory/npm/<int:host_id>", methods=["PUT", "DELETE"])
+def api_inventory_npm_item(host_id):
+    if request.method == "DELETE":
+        inventory_store.delete_npm_host(host_id)
+        return jsonify({"status": "success", "message": "NPM berhasil dihapus."})
+    data = request.get_json(silent=True) or request.form.to_dict()
+    try:
+        inventory_store.save_npm_host(data, host_id=host_id)
+        return jsonify({"status": "success", "message": "NPM berhasil diperbarui."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/inventory/npm/test", methods=["POST"])
+def api_inventory_npm_test():
+    data = request.get_json(silent=True) or request.form.to_dict()
+    res = inventory_store.test_npm_connection(data)
+    return jsonify(res)
+
+
+# Overrides
+@app.route("/api/inventory/overrides", methods=["GET", "POST"])
+def api_inventory_overrides():
+    if request.method == "GET":
+        return jsonify({"status": "success", "data": inventory_store.get_manual_overrides()})
+    data = request.get_json(silent=True) or request.form.to_dict()
+    try:
+        inventory_store.save_manual_override(data)
+        return jsonify({"status": "success", "message": f"Override untuk '{data.get('domain')}' berhasil disimpan."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/inventory/overrides/<int:host_id>", methods=["DELETE"])
+def api_inventory_override_delete(host_id):
+    inventory_store.delete_manual_override(host_id)
+    return jsonify({"status": "success", "message": "Manual override berhasil dihapus."})
+
+
+# SSH Default
+@app.route("/api/inventory/ssh-default", methods=["GET", "POST"])
+def api_inventory_ssh_default():
+    if request.method == "GET":
+        return jsonify({"status": "success", "data": inventory_store.get_ssh_default()})
+    data = request.get_json(silent=True) or request.form.to_dict()
+    try:
+        inventory_store.set_ssh_default(data)
+        return jsonify({"status": "success", "message": "Pengaturan SSH default berhasil disimpan."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+# Re-import YAML
+@app.route("/api/inventory/import-yaml", methods=["POST"])
+def api_inventory_import_yaml():
+    try:
+        res = inventory_store.auto_migrate_from_yaml("config.yaml", force=True)
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)
+

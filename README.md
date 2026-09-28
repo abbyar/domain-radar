@@ -283,6 +283,42 @@ python app.py
 Open your browser and navigate to:  
 👉 **`http://localhost:5000`** (or `http://YOUR-SERVER-IP:5000`)
 
+---
+
+## 🗄️ Inventory Management (Web UI & CLI Console)
+
+Tidak perlu lagi memasukkan puluhan host dan kredensial secara manual ke dalam file `config.yaml` yang panjang! Semua data host kini tersimpan dan dikelola langsung di dalam **database SQLite (`inventory.db`)** melalui 2 pilihan antarmuka:
+
+### 1. Web UI Modal ("Inventory" Button)
+Pada dashboard web Domain Radar:
+1. Klik tombol **`Inventory`** di header bagian atas (atau via menu gear `⚙️` -> **Kelola Inventory**).
+2. Terdapat tab untuk setiap kategori:
+   - **Proxmox VE**: Tambah/Edit node, IP API, IP SSH, port, dan path SSH key.
+   - **VMware**: Tambah cluster vCenter atau host ESXi standalone.
+   - **Safeline WAF**: Daftarkan IP lokal instance, URL Open API, dan Token API.
+   - **Nginx Proxy Manager**: Daftarkan IP lokal, port web admin (81), email & password.
+   - **Manual Overrides**: Masukkan domain khusus & IP backend tanpa scan SSH.
+   - **SSH Default**: Konfigurasi user default dan private key untuk scanning VM.
+3. Fitur **Test Connection**: Setiap baris host memiliki tombol **`Test`** untuk menguji konektivitas API/SSH secara real-time langsung dari browser sebelum data disimpan.
+4. Fitur **Sync dari config.yaml**: Tersedia tombol untuk re-import dan menimpa konfigurasi dari `config.yaml` ke database kapan pun dibutuhkan.
+
+### 2. Interactive CLI Console (`manage_inventory.py`)
+Untuk pengelolaan langsung melalui terminal / SSH:
+```bash
+python manage_inventory.py
+```
+Menu interaktif yang tersedia:
+- `[1]` Kelola Host Proxmox VE (Lihat, Tambah, Edit, Hapus, Test Koneksi)
+- `[2]` Kelola Host VMware (vCenter & ESXi)
+- `[3]` Kelola Instance Safeline WAF
+- `[4]` Kelola Instance Nginx Proxy Manager (NPM)
+- `[5]` Kelola Manual Overrides
+- `[6]` Kelola Pengaturan SSH Default
+- `[7]` Test Koneksi Seluruh Host (Health Check otomatis semua node)
+- `[8]` Jalankan Discovery Pipeline (`run_all.py`)
+- `[9]` Re-import Ulang dari config.yaml (Timpa DB)
+
+
 ### 🔐 Web UI Authentication & Dynamic Password Management
 By default, access to the Web UI dashboard and REST API is protected with password authentication:
 - **Default Username**: `admin`

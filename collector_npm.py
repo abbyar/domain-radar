@@ -58,14 +58,14 @@ def fetch_proxy_hosts(npm_cfg):
 
 
 def collect(config, db_path):
+    import inventory_store
+    npm_hosts = inventory_store.get_npm_hosts() or config.get("npm_hosts", []) or []
+    if not npm_hosts:
+        print("[npm] Skipped: no NPM instances configured (npm_hosts is empty).")
+        return
+
     conn = sqlite3.connect(db_path, timeout=30.0)
     cur = conn.cursor()
-
-    npm_hosts = config.get("npm_hosts", []) or []
-    if not npm_hosts:
-        print("[npm] Skipped: no NPM instances configured in config.yaml (npm_hosts is empty).")
-        conn.close()
-        return
 
     for npm in npm_hosts:
         api_base = npm.get("api_base", f"http://{npm.get('local_ip')}:81").rstrip("/")

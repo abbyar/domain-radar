@@ -204,9 +204,10 @@ def collect(config, db_path):
         print("[vmware] pyvmomi is not available, skipping VMware collection.")
         return
 
-    vmware_hosts = config.get("vmware_hosts", [])
+    import inventory_store
+    vmware_hosts = inventory_store.get_vmware_hosts() or config.get("vmware_hosts", [])
     if not vmware_hosts:
-        print("[vmware] No vmware_hosts configured in config.yaml, skipping.")
+        print("[vmware] No vmware_hosts configured, skipping.")
         return
 
     conn = sqlite3.connect(db_path, timeout=30.0)

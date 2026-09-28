@@ -51,4 +51,8 @@ if user_count == 0:
 
 conn.close()
 
+import inventory_store
+inventory_store.init_tables()
+inventory_store.auto_migrate_from_yaml("config.yaml")
+
 print(f"Database '{db_path}' initialized and ready.")

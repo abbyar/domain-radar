@@ -97,8 +97,16 @@ def onboard_host(host_cfg):
 
 
 def main():
-    with open(CONFIG_PATH) as f:
-        config = yaml.safe_load(f)
+    import inventory_store
+    config = {}
+    if os.path.exists(CONFIG_PATH):
+        try:
+            with open(CONFIG_PATH) as f:
+                config = yaml.safe_load(f) or {}
+        except Exception:
+            pass
+
+    proxmox_hosts = inventory_store.get_proxmox_hosts() or config.get("proxmox_hosts", [])
 
     try:
         with open(CREDENTIALS_PATH) as f:
@@ -107,7 +115,7 @@ def main():
         credentials = {}
 
     changed = False
-    for host_cfg in config["proxmox_hosts"]:
+    for host_cfg in proxmox_hosts:
         name = host_cfg["name"]
         if name in credentials:
             # Ensure latest roles and permissions (AgentMonitor etc.) are applied
