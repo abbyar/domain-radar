@@ -550,8 +550,11 @@ def api_inventory_proxmox():
         return jsonify({"status": "success", "data": inventory_store.get_proxmox_hosts()})
     data = request.get_json(silent=True) or request.form.to_dict()
     try:
-        inventory_store.save_proxmox_host(data)
-        return jsonify({"status": "success", "message": f"Host '{data.get('name')}' berhasil disimpan."})
+        bootstrap_res = inventory_store.save_proxmox_host(data)
+        msg = f"Host '{data.get('name')}' berhasil disimpan."
+        if bootstrap_res and bootstrap_res.get("message"):
+            msg += f" {bootstrap_res.get('message')}"
+        return jsonify({"status": "success", "message": msg})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
 
@@ -563,8 +566,11 @@ def api_inventory_proxmox_item(host_id):
         return jsonify({"status": "success", "message": "Host Proxmox berhasil dihapus."})
     data = request.get_json(silent=True) or request.form.to_dict()
     try:
-        inventory_store.save_proxmox_host(data, host_id=host_id)
-        return jsonify({"status": "success", "message": "Host Proxmox berhasil diperbarui."})
+        bootstrap_res = inventory_store.save_proxmox_host(data, host_id=host_id)
+        msg = "Host Proxmox berhasil diperbarui."
+        if bootstrap_res and bootstrap_res.get("message"):
+            msg += f" {bootstrap_res.get('message')}"
+        return jsonify({"status": "success", "message": msg})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
 
@@ -721,6 +727,38 @@ def api_inventory_import_yaml():
     try:
         res = inventory_store.auto_migrate_from_yaml("config.yaml", force=True)
         return jsonify(res)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+# File Browser & SSH Key Discovery
+@app.route("/api/inventory/browse-keys", methods=["GET"])
+def api_inventory_browse_keys():
+    try:
+        keys = inventory_store.get_detected_ssh_keys()
+        return jsonify({"status": "success", "keys": keys})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/inventory/browse-files", methods=["GET"])
+def api_inventory_browse_files():
+    folder = request.args.get("path")
+    res = inventory_store.browse_filesystem(folder)
+    return jsonify(res)
+
+
+@app.route("/api/inventory/upload-key", methods=["POST"])
+def api_inventory_upload_key():
+    if "key_file" not in request.files:
+        return jsonify({"status": "error", "message": "Tidak ada file yang diunggah."}), 400
+    file = request.files["key_file"]
+    if not file.filename:
+        return jsonify({"status": "error", "message": "Nama file kosong."}), 400
+    try:
+        content = file.read()
+        saved_path = inventory_store.save_uploaded_key(file.filename, content)
+        return jsonify({"status": "success", "message": "File SSH Key berhasil disimpan.", "path": saved_path})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 

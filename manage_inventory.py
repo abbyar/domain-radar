@@ -82,11 +82,11 @@ def menu_proxmox():
         if not hosts:
             print("  (Belum ada host Proxmox yang terdaftar)")
         else:
-            print(f" {'ID':<4} | {'NAMA':<16} | {'API HOST':<16} | {'SSH HOST':<16} | {'PORT':<5} | {'KEY'}")
-            print("-" * 68)
+            print(f" {'ID':<4} | {'NAMA':<16} | {'API HOST':<15} | {'SSH HOST':<15} | {'PORT':<5} | {'AUTH'}")
+            print("-" * 72)
             for h in hosts:
-                key_short = os.path.basename(h["ssh_key_path"]) if h["ssh_key_path"] else "-"
-                print(f" {h['id']:<4} | {h['name']:<16} | {h['api_host']:<16} | {h['ssh_host']:<16} | {h['ssh_port']:<5} | {key_short}")
+                auth_str = "Auto (Pwd)" if h.get("auth_method") == "password" or h.get("has_password") else (os.path.basename(h["ssh_key_path"]) if h["ssh_key_path"] else "Key")
+                print(f" {h['id']:<4} | {h['name']:<16} | {h['api_host']:<15} | {h['ssh_host']:<15} | {h['ssh_port']:<5} | {auth_str}")
 
         print("\nOpsi:")
         print("  [1] Tambah Host Proxmox")
@@ -102,16 +102,33 @@ def menu_proxmox():
             api_host = prompt_str("  API Host / IP (misal: 192.168.1.10)")
             ssh_host = prompt_optional("  SSH Host / IP", default=api_host)
             ssh_user = prompt_optional("  SSH User", default="root")
-            ssh_key = prompt_optional("  Path SSH Private Key", default="C:/Users/blackping_/.ssh/id_rsa_inventory")
             ssh_port = prompt_int("  SSH Port", default=22)
             verify_ssl = prompt_bool("  Verifikasi SSL?", default=False)
+
+            print("\n  Pilih Metode Autentikasi SSH & Token API:")
+            print("    [1] Password Root (Otomatis Copy SSH Key & Setup Token API) [Direkomendasikan]")
+            print("    [2] SSH Private Key Path (Manual)")
+            p_auth = input("  Pilihan [1/2, default: 1]: ").strip() or "1"
+            if p_auth == "1":
+                auth_method = "password"
+                password = prompt_str("  Password Root Proxmox (dipakai untuk auto copy RSA & token)")
+                ssh_key = ""
+                print("\n  [*] Menghubungi Proxmox, menyalin SSH Key & membuat Token API...")
+            else:
+                auth_method = "key"
+                password = ""
+                ssh_key = prompt_optional("  Path SSH Private Key", default="C:/Users/blackping_/.ssh/id_rsa_inventory")
+
             try:
-                inventory_store.save_proxmox_host({
+                res = inventory_store.save_proxmox_host({
                     "name": name, "api_host": api_host, "ssh_host": ssh_host,
                     "ssh_user": ssh_user, "ssh_key_path": ssh_key,
-                    "ssh_port": ssh_port, "verify_ssl": verify_ssl
+                    "ssh_port": ssh_port, "verify_ssl": verify_ssl,
+                    "auth_method": auth_method, "password": password
                 })
                 print("\n[+] Host Proxmox berhasil disimpan ke database!")
+                if res and res.get("message"):
+                    print(f"    Status: {res.get('message')}")
             except Exception as e:
                 print(f"\n[-] Gagal menyimpan: {e}")
             input("\nTekan Enter untuk lanjut...")
@@ -127,16 +144,32 @@ def menu_proxmox():
                 api_host = prompt_str("  API Host / IP", default=target["api_host"])
                 ssh_host = prompt_optional("  SSH Host / IP", default=target["ssh_host"])
                 ssh_user = prompt_optional("  SSH User", default=target["ssh_user"])
-                ssh_key = prompt_optional("  Path SSH Private Key", default=target["ssh_key_path"])
                 ssh_port = prompt_int("  SSH Port", default=target["ssh_port"])
                 verify_ssl = prompt_bool("  Verifikasi SSL?", default=target["verify_ssl"])
+
+                curr_auth = target.get("auth_method", "password")
+                print(f"  Metode Auth saat ini: {curr_auth}")
+                re_boot = prompt_bool("  Update Password / Lakukan Bootstrap Ulang SSH Key & Token?", default=False)
+                password = ""
+                auth_method = curr_auth
+                ssh_key = target.get("ssh_key_path", "")
+                if re_boot:
+                    auth_method = "password"
+                    password = prompt_str("  Password Root Proxmox Baru")
+                    print("\n  [*] Menghubungi Proxmox, menyalin SSH Key & membuat Token API...")
+                elif curr_auth == "key":
+                    ssh_key = prompt_optional("  Path SSH Private Key", default=target["ssh_key_path"])
+
                 try:
-                    inventory_store.save_proxmox_host({
+                    res = inventory_store.save_proxmox_host({
                         "name": name, "api_host": api_host, "ssh_host": ssh_host,
                         "ssh_user": ssh_user, "ssh_key_path": ssh_key,
-                        "ssh_port": ssh_port, "verify_ssl": verify_ssl
+                        "ssh_port": ssh_port, "verify_ssl": verify_ssl,
+                        "auth_method": auth_method, "password": password
                     }, host_id=hid)
                     print("\n[+] Host Proxmox berhasil diperbarui!")
+                    if res and res.get("message"):
+                        print(f"    Status: {res.get('message')}")
                 except Exception as e:
                     print(f"\n[-] Gagal update: {e}")
             input("\nTekan Enter untuk lanjut...")

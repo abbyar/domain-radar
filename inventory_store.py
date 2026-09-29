@@ -56,6 +56,8 @@ def init_tables():
         ssh_key_path TEXT,
         ssh_port INTEGER DEFAULT 22,
         verify_ssl INTEGER DEFAULT 0,
+        auth_method TEXT DEFAULT 'password',
+        password TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
@@ -111,6 +113,15 @@ def init_tables():
     CREATE INDEX IF NOT EXISTS idx_inv_pve_name ON inv_proxmox_hosts(name);
     CREATE INDEX IF NOT EXISTS idx_inv_vmware_name ON inv_vmware_hosts(name);
     """)
+
+    # Seamless schema migrations for existing databases
+    for col, col_type in (("auth_method", "TEXT DEFAULT 'password'"), ("password", "TEXT")):
+        try:
+            conn.execute(f"ALTER TABLE inv_proxmox_hosts ADD COLUMN {col} {col_type}")
+            conn.commit()
+        except Exception:
+            pass
+
     conn.commit()
     conn.close()
 
@@ -263,8 +274,10 @@ def get_proxmox_hosts():
     conn = get_connection()
     rows = conn.execute("SELECT * FROM inv_proxmox_hosts ORDER BY name ASC").fetchall()
     conn.close()
-    return [
-        {
+    result = []
+    for r in rows:
+        keys = r.keys()
+        item = {
             "id": r["id"],
             "name": r["name"],
             "api_host": r["api_host"],
@@ -273,9 +286,11 @@ def get_proxmox_hosts():
             "ssh_key_path": r["ssh_key_path"],
             "ssh_port": r["ssh_port"],
             "verify_ssl": bool(r["verify_ssl"]),
+            "auth_method": r["auth_method"] if "auth_method" in keys and r["auth_method"] else "password",
+            "has_password": bool("password" in keys and r["password"]),
         }
-        for r in rows
-    ]
+        result.append(item)
+    return result
 
 
 def get_vmware_hosts():
@@ -399,6 +414,174 @@ def get_inventory_summary():
 
 
 # ============================================================================
+# Proxmox SSH Key & Token Bootstrap Helpers
+# ============================================================================
+
+def get_system_public_key(preferred_key_path=None):
+    """Find or extract the public key corresponding to our scanner's private key."""
+    candidates = []
+    if preferred_key_path:
+        candidates.append(preferred_key_path + ".pub")
+        candidates.append(preferred_key_path)
+
+    ssh_cfg = get_ssh_default()
+    if ssh_cfg.get("key_path"):
+        candidates.append(ssh_cfg["key_path"] + ".pub")
+        candidates.append(ssh_cfg["key_path"])
+
+    user_home = os.path.expanduser("~")
+    candidates.append(os.path.join(user_home, ".ssh", "id_rsa_inventory.pub"))
+    candidates.append(os.path.join(user_home, ".ssh", "id_rsa_inventory"))
+    candidates.append(os.path.join(user_home, ".ssh", "id_rsa.pub"))
+    candidates.append(os.path.join(user_home, ".ssh", "id_rsa"))
+
+    for c in candidates:
+        if c.endswith(".pub") and os.path.exists(c):
+            try:
+                with open(c, "r", encoding="utf-8") as f:
+                    pub = f.read().strip()
+                    if pub.startswith(("ssh-rsa", "ssh-ed25519", "ecdsa-")):
+                        return pub
+            except Exception:
+                pass
+
+    # Fallback: extract directly from private key file
+    for c in candidates:
+        if not c.endswith(".pub") and os.path.exists(c):
+            try:
+                import paramiko
+                for key_cls in (paramiko.Ed25519Key, paramiko.RSAKey, paramiko.ECDSAKey):
+                    try:
+                        k = key_cls.from_private_key_file(c)
+                        return f"{k.get_name()} {k.get_base64()} domain-radar-scanner"
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+    return None
+
+
+def bootstrap_proxmox_ssh_and_token(host_data, password):
+    """
+    1. Connects to Proxmox via SSH using password.
+    2. Copies local SSH public key to /root/.ssh/authorized_keys (ssh-copy-id style).
+    3. Provisions read-only user 'inventory@pve' with PVEAuditor & AgentMonitor roles.
+    4. Generates an API token and saves it directly to credentials.yaml.
+    """
+    import paramiko
+    import re
+
+    ssh_host = host_data.get("ssh_host") or host_data.get("api_host")
+    ssh_port = int(host_data.get("ssh_port", 22))
+    ssh_user = host_data.get("ssh_user", "root")
+    name = host_data.get("name")
+
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        client.connect(
+            ssh_host,
+            port=ssh_port,
+            username=ssh_user,
+            password=password,
+            timeout=10,
+            look_for_keys=False,
+            allow_agent=False,
+        )
+    except Exception as e:
+        return {"status": "error", "message": f"Gagal login SSH password ke {ssh_host}:{ssh_port}: {e}"}
+
+    key_installed = False
+    pub_key = get_system_public_key(host_data.get("ssh_key_path"))
+    if pub_key:
+        try:
+            pub_parts = pub_key.split()
+            key_body = pub_parts[1] if len(pub_parts) > 1 else pub_key
+            escaped_key = pub_key.replace("'", "'\\''")
+            copy_cmd = f"mkdir -p ~/.ssh && chmod 700 ~/.ssh && touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && (grep -q -F '{key_body}' ~/.ssh/authorized_keys 2>/dev/null || echo '{escaped_key}' >> ~/.ssh/authorized_keys)"
+            stdin, stdout, stderr = client.exec_command(copy_cmd, timeout=10)
+            stdout.channel.recv_exit_status()
+            key_installed = True
+        except Exception as e:
+            print(f"[WARN] Failed to copy SSH key to {name}: {e}")
+
+    # Provision user and API token
+    bootstrap_cmds = """
+set -e
+pveum user add inventory@pve --comment "Automated inventory scanner (auto-provisioned)" 2>/dev/null || true
+pveum role add AgentMonitor -privs "VM.Monitor" 2>/dev/null || true
+pveum acl modify / -users inventory@pve -roles PVEAuditor,AgentMonitor 2>/dev/null || true
+"""
+    try:
+        stdin, stdout, stderr = client.exec_command(bootstrap_cmds, timeout=15)
+        stdout.channel.recv_exit_status()
+    except Exception:
+        pass
+
+    token_cmd = "pveum user token add inventory@pve inventory --privsep 0 --output-format json"
+    stdin, stdout, stderr = client.exec_command(token_cmd, timeout=15)
+    out = stdout.read().decode(errors="ignore")
+    err = stderr.read().decode(errors="ignore")
+    exit_code = stdout.channel.recv_exit_status()
+
+    if exit_code != 0 and "already exists" in (err + out).lower():
+        client.exec_command("pveum user token remove inventory@pve inventory", timeout=10)
+        stdin, stdout, stderr = client.exec_command(token_cmd, timeout=15)
+        out = stdout.read().decode(errors="ignore")
+        exit_code = stdout.channel.recv_exit_status()
+
+    token_val = None
+    if exit_code == 0:
+        try:
+            import json
+            data = json.loads(out)
+            token_val = data.get("value")
+        except Exception:
+            pass
+        if not token_val:
+            m = re.search(r"value\s*[│|]\s*([a-f0-9-]{20,})", out)
+            if m:
+                token_val = m.group(1)
+
+    client.close()
+
+    token_saved = False
+    if token_val and name:
+        creds_path = "credentials.yaml"
+        creds = {}
+        if os.path.exists(creds_path):
+            try:
+                with open(creds_path, "r", encoding="utf-8") as f:
+                    creds = yaml.safe_load(f) or {}
+            except Exception:
+                pass
+        creds[name] = {
+            "user": "inventory@pve",
+            "token_name": "inventory",
+            "token_value": token_val
+        }
+        try:
+            with open(creds_path, "w", encoding="utf-8") as f:
+                yaml.safe_dump(creds, f)
+            token_saved = True
+        except Exception as e:
+            print(f"[WARN] Failed to write {creds_path}: {e}")
+
+    msg_parts = ["Otentikasi SSH password sukses."]
+    if key_installed:
+        msg_parts.append("SSH Public Key berhasil disalin ke ~/.ssh/authorized_keys.")
+    if token_saved:
+        msg_parts.append("API Token 'inventory@pve' berhasil dibuat & disimpan ke credentials.yaml.")
+
+    return {
+        "status": "success",
+        "key_installed": key_installed,
+        "token_saved": token_saved,
+        "message": " ".join(msg_parts)
+    }
+
+
+# ============================================================================
 # CRUD Functions
 # ============================================================================
 
@@ -408,28 +591,55 @@ def save_proxmox_host(data, host_id=None):
     api_host = str(data.get("api_host", "")).strip()
     ssh_host = str(data.get("ssh_host", "")).strip() or api_host
     ssh_user = str(data.get("ssh_user", "root")).strip() or "root"
-    ssh_key_path = str(data.get("ssh_key_path", "")).strip()
     ssh_port = int(data.get("ssh_port", 22))
     verify_ssl = 1 if data.get("verify_ssl") in (True, 1, "1", "true") else 0
+    auth_method = str(data.get("auth_method", "password")).strip() or "password"
+    password = str(data.get("password") or data.get("ssh_password") or "").strip()
+
+    # Default to global SSH key if not provided
+    ssh_key_path = str(data.get("ssh_key_path", "")).strip()
+    if not ssh_key_path:
+        ssh_cfg = get_ssh_default()
+        ssh_key_path = ssh_cfg.get("key_path", "")
 
     if not name or not api_host:
         raise ValueError("Nama Host dan API Host wajib diisi.")
 
+    bootstrap_result = None
+    # If password is provided, perform automated bootstrap (copy SSH key & provision API token)
+    if password:
+        host_dict = {
+            "name": name, "api_host": api_host, "ssh_host": ssh_host,
+            "ssh_user": ssh_user, "ssh_port": ssh_port, "ssh_key_path": ssh_key_path
+        }
+        bootstrap_result = bootstrap_proxmox_ssh_and_token(host_dict, password)
+        if bootstrap_result.get("status") == "error":
+            raise ValueError(bootstrap_result.get("message"))
+
     conn = get_connection()
     cur = conn.cursor()
     if host_id:
-        cur.execute("""
-            UPDATE inv_proxmox_hosts
-            SET name=?, api_host=?, ssh_host=?, ssh_user=?, ssh_key_path=?, ssh_port=?, verify_ssl=?, updated_at=CURRENT_TIMESTAMP
-            WHERE id=?
-        """, (name, api_host, ssh_host, ssh_user, ssh_key_path, ssh_port, verify_ssl, host_id))
+        if password:
+            cur.execute("""
+                UPDATE inv_proxmox_hosts
+                SET name=?, api_host=?, ssh_host=?, ssh_user=?, ssh_key_path=?, ssh_port=?, verify_ssl=?, auth_method=?, password=?, updated_at=CURRENT_TIMESTAMP
+                WHERE id=?
+            """, (name, api_host, ssh_host, ssh_user, ssh_key_path, ssh_port, verify_ssl, auth_method, password, host_id))
+        else:
+            cur.execute("""
+                UPDATE inv_proxmox_hosts
+                SET name=?, api_host=?, ssh_host=?, ssh_user=?, ssh_key_path=?, ssh_port=?, verify_ssl=?, auth_method=?, updated_at=CURRENT_TIMESTAMP
+                WHERE id=?
+            """, (name, api_host, ssh_host, ssh_user, ssh_key_path, ssh_port, verify_ssl, auth_method, host_id))
     else:
         cur.execute("""
-            INSERT INTO inv_proxmox_hosts (name, api_host, ssh_host, ssh_user, ssh_key_path, ssh_port, verify_ssl)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (name, api_host, ssh_host, ssh_user, ssh_key_path, ssh_port, verify_ssl))
+            INSERT INTO inv_proxmox_hosts (name, api_host, ssh_host, ssh_user, ssh_key_path, ssh_port, verify_ssl, auth_method, password)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (name, api_host, ssh_host, ssh_user, ssh_key_path, ssh_port, verify_ssl, auth_method, password))
     conn.commit()
     conn.close()
+
+    return bootstrap_result
 
 
 def delete_proxmox_host(host_id):
@@ -630,23 +840,48 @@ def test_proxmox_connection(data):
         return {"status": "error", "message": f"Keduanya tidak dapat dihubungi. API (8006): {api_msg}, SSH ({ssh_port}): {ssh_msg}"}
 
     ssh_key = data.get("ssh_key_path")
+    password = data.get("password") or data.get("ssh_password")
     ssh_auth_note = ""
-    if ssh_ok and ssh_key and os.path.exists(ssh_key):
-        try:
-            import paramiko
-            client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            client.connect(
-                ssh_host,
-                port=ssh_port,
-                username=data.get("ssh_user", "root"),
-                key_filename=ssh_key,
-                timeout=5,
-            )
-            client.close()
-            ssh_auth_note = " Otentikasi SSH Key berhasil!"
-        except Exception as e:
-            ssh_auth_note = f" (Port SSH terbuka, tetapi SSH Key gagal: {e})"
+
+    if not ssh_key:
+        ssh_cfg = get_ssh_default()
+        ssh_key = ssh_cfg.get("key_path") or os.path.join(os.path.expanduser("~"), ".ssh", "id_rsa_inventory")
+
+    if ssh_ok:
+        if password:
+            try:
+                import paramiko
+                client = paramiko.SSHClient()
+                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                client.connect(
+                    ssh_host,
+                    port=ssh_port,
+                    username=data.get("ssh_user", "root"),
+                    password=password,
+                    timeout=6,
+                    look_for_keys=False,
+                    allow_agent=False,
+                )
+                client.close()
+                ssh_auth_note = " Otentikasi Password SSH berhasil! (Siap otomatis deploy SSH Key & Token saat disimpan)"
+            except Exception as e:
+                ssh_auth_note = f" (Port SSH terbuka, tetapi login password gagal: {e})"
+        elif ssh_key and os.path.exists(ssh_key):
+            try:
+                import paramiko
+                client = paramiko.SSHClient()
+                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                client.connect(
+                    ssh_host,
+                    port=ssh_port,
+                    username=data.get("ssh_user", "root"),
+                    key_filename=ssh_key,
+                    timeout=5,
+                )
+                client.close()
+                ssh_auth_note = " Otentikasi SSH Key berhasil!"
+            except Exception as e:
+                ssh_auth_note = f" (Port SSH terbuka, tetapi SSH Key gagal: {e})"
 
     return {
         "status": "success" if (api_ok or ssh_ok) else "warning",
@@ -734,6 +969,174 @@ def test_npm_connection(data):
         return {"status": "error", "message": f"Autentikasi NPM gagal (Status {resp.status_code}): {resp.text}"}
     except Exception as e:
         return {"status": "error", "message": f"Gagal menghubungi NPM API: {e}"}
+
+
+# ============================================================================
+# File Browser & SSH Key Discovery Helpers
+# ============================================================================
+
+def get_detected_ssh_keys():
+    """Scan ~/.ssh/ and project folder for SSH private key files."""
+    ssh_dir = os.path.expanduser("~/.ssh")
+    keys = []
+    seen_paths = set()
+
+    search_dirs = [ssh_dir, os.path.abspath(".")]
+    for sdir in search_dirs:
+        if not os.path.exists(sdir):
+            continue
+        try:
+            for fname in os.listdir(sdir):
+                if fname.endswith((".pub", ".old", ".known_hosts", ".yaml", ".yml", ".json", ".db", ".py", ".md", ".txt")):
+                    continue
+                if "known_hosts" in fname or fname.startswith("."):
+                    continue
+                fpath = os.path.join(sdir, fname)
+                if not os.path.isfile(fpath):
+                    continue
+                norm_path = fpath.replace("\\", "/")
+                if norm_path in seen_paths:
+                    continue
+                seen_paths.add(norm_path)
+
+                is_priv = False
+                try:
+                    with open(fpath, "r", encoding="utf-8", errors="ignore") as f:
+                        header = f.read(250)
+                        if "PRIVATE KEY" in header:
+                            is_priv = True
+                except Exception:
+                    pass
+
+                # If in ~/.ssh and looks like id_* or has PRIVATE KEY
+                if is_priv or (sdir == ssh_dir and fname.startswith("id_")):
+                    keys.append({
+                        "name": fname,
+                        "path": norm_path,
+                        "is_private_key": is_priv,
+                        "size": os.path.getsize(fpath),
+                        "folder": sdir.replace("\\", "/")
+                    })
+        except Exception:
+            pass
+
+    return keys
+
+
+def get_available_drives():
+    import string
+    drives = []
+    if os.name == "nt":
+        for letter in string.ascii_uppercase:
+            drive_path = f"{letter}:\\"
+            if os.path.exists(drive_path):
+                drives.append(f"{letter}:/")
+    else:
+        drives.append("/")
+    return drives
+
+
+def browse_filesystem(folder_path=None):
+    """List subfolders and files in the given directory for UI file browser."""
+    default_dir = os.path.expanduser("~/.ssh")
+    if not os.path.exists(default_dir):
+        default_dir = os.path.expanduser("~")
+
+    target = folder_path.strip() if folder_path else default_dir
+    target = os.path.abspath(target)
+    if not os.path.exists(target) or not os.path.isdir(target):
+        target = default_dir
+
+    norm_target = target.replace("\\", "/").rstrip("/")
+    if os.name == "nt" and len(norm_target) == 2 and norm_target[1] == ":":
+        norm_target += "/"
+
+    # Parent path calculation
+    parent = os.path.dirname(target)
+    parent_norm = parent.replace("\\", "/").rstrip("/") if parent and parent != target else None
+    if parent_norm and os.name == "nt" and len(parent_norm) == 2 and parent_norm[1] == ":":
+        parent_norm += "/"
+
+    items = []
+    try:
+        entries = os.listdir(target)
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Tidak dapat membuka direktori: {e}",
+            "current_path": norm_target,
+            "parent_path": parent_norm,
+            "drives": get_available_drives(),
+            "items": []
+        }
+
+    for entry in entries:
+        if entry.startswith("$") or entry in ("System Volume Information", "pagefile.sys", "hiberfil.sys"):
+            continue
+        full_p = os.path.join(target, entry)
+        is_dir = os.path.isdir(full_p)
+        item_norm = full_p.replace("\\", "/")
+
+        size = 0
+        is_key = False
+        if not is_dir:
+            try:
+                size = os.path.getsize(full_p)
+                ext = os.path.splitext(entry)[1].lower()
+                if ext in (".pem", ".key", ".rsa", ".id_rsa") or entry.startswith("id_") or not ext:
+                    if not entry.endswith(".pub"):
+                        try:
+                            with open(full_p, "r", encoding="utf-8", errors="ignore") as f:
+                                if "PRIVATE KEY" in f.read(250):
+                                    is_key = True
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+        items.append({
+            "name": entry,
+            "path": item_norm,
+            "is_dir": is_dir,
+            "size": size,
+            "is_key": is_key
+        })
+
+    # Sort: folders first, then key files, then normal files
+    items.sort(key=lambda x: (not x["is_dir"], not x.get("is_key", False), x["name"].lower()))
+
+    return {
+        "status": "success",
+        "current_path": norm_target,
+        "parent_path": parent_norm,
+        "drives": get_available_drives(),
+        "items": items
+    }
+
+
+def save_uploaded_key(filename, file_bytes):
+    """Save an uploaded SSH private key into ~/.ssh/ and return its path."""
+    import re
+    ssh_dir = os.path.expanduser("~/.ssh")
+    os.makedirs(ssh_dir, exist_ok=True)
+
+    # Sanitize filename
+    clean_name = re.sub(r"[^a-zA-Z0-9_\-\.]", "_", os.path.basename(filename))
+    if not clean_name:
+        clean_name = "uploaded_id_rsa"
+
+    target_path = os.path.join(ssh_dir, clean_name)
+    with open(target_path, "wb") as f:
+        f.write(file_bytes)
+
+    # Set file permissions if posix
+    if hasattr(os, "chmod"):
+        try:
+            os.chmod(target_path, 0o600)
+        except Exception:
+            pass
+
+    return target_path.replace("\\", "/")
 
 
 # Initialize tables and migrate existing YAML configs on first import
